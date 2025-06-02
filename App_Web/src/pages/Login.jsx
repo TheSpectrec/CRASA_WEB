@@ -1,12 +1,14 @@
-import { useState } from "react";
-import { Shield, Mail, Lock } from "lucide-react";
-import logo from "../../public/CRASA.svg"
+import { useState, useEffect } from "react";
+import { Mail, Lock } from "lucide-react";
+import logo from "../assets/CRASA.svg";
+import "../styles/Login.css";
 
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [gradientPosition, setGradientPosition] = useState(0);
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -35,20 +37,20 @@ export default function Login() {
     }
 
     return (
-        <div className="max-w-[900px] mx-auto grid md:grid-cols-7 shadow-md rounded-md overflow-hidden border border-gray-200">
+        <div className="max-w-[700px] mx-auto grid md:grid-cols-9 shadow-md rounded-md overflow-hidden border border-gray-200">
       {/* Columna de branding */}
-      <div className="hidden md:flex md:col-span-2 bg-gradient-to-tl from-[#F3DB30] via-[#E87D38] to-[#744737] bg-size-200 bg-pos-0 hover:bg-pos-100 transition-all duration-500 items-center justify-center p-8 border-r border-gray-200">
-        <div className="flex flex-col items-center">
-          <Shield className="h-20 w-20 text-gray-700" />
+      <div className="hidden md:flex md:col-span-3 animated-gradient items-center justify-center p-8 border-r border-gray-200 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-transparent animate-pulse opacity-50"></div>
+        <div className="flex flex-col items-center z-10 transition-all duration-700 hover:scale-110 hover:rotate-3">
+          <img src={logo} alt="CRASA Logo" className="h-32 w-auto drop-shadow-lg" />
         </div>
       </div>
 
       {/* Formulario de login */}
-      <div className="md:col-span-5 border-0 shadow-none rounded-none bg-white">
+      <div className="md:col-span-6 border-0 shadow-none rounded-none bg-white">
         <div className="space-y-1 pt-6 pb-5 px-6">
           <div className="md:hidden flex items-center gap-2 mb-4">
-            <Shield className="h-6 w-6 text-gray-700" />
-            <span className="text-sm font-semibold tracking-tight">EMPRESA S.A.</span>
+            <img src={logo} alt="CRASA Logo" className="h-10 w-auto" />
           </div>
           <h2 className="text-left text-xl font-semibold text-gray-800">Iniciar sesión</h2>
           <p className="text-left text-sm text-gray-500">Ingrese sus credenciales para acceder al sistema</p>
