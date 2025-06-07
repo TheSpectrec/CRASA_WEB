@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Mail, Lock } from "lucide-react";
 import logo from "../assets/CRASA.svg";
 import "../styles/Login.css";
@@ -9,6 +10,7 @@ export default function Login() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [gradientPosition, setGradientPosition] = useState(0);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -25,9 +27,9 @@ export default function Login() {
         try {
             // Aquí iría la lógica de autenticación real
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            alert("Login successful!");
+            // alert("Login successful!"); // Optional: can be removed or kept for debugging
             console.log("Iniciando sesión con:", { email, password });
-            // Redirección después del inicio de sesión exitoso
+            navigate('/general'); // Redirection after successful login
         } catch (err) {
             console.error("Error al iniciar sesión:", err);
             setError("Error al iniciar sesión. Verifique sus credenciales.");
@@ -37,12 +39,13 @@ export default function Login() {
     }
 
     return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-[700px] mx-auto grid md:grid-cols-9 shadow-md rounded-md overflow-hidden border border-gray-200">
       {/* Columna de branding */}
       <div className="hidden md:flex md:col-span-3 animated-gradient items-center justify-center p-8 border-r border-gray-200 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-transparent animate-pulse opacity-50"></div>
         <div className="flex flex-col items-center z-10 transition-all duration-700 hover:scale-110 hover:rotate-3">
-          <img src={logo} alt="CRASA Logo" className="h-32 w-auto drop-shadow-lg" />
+          <img src={logo} alt="CRASA" className="h-32 w-auto drop-shadow-lg" />
         </div>
       </div>
 
@@ -50,7 +53,7 @@ export default function Login() {
       <div className="md:col-span-6 border-0 shadow-none rounded-none bg-white">
         <div className="space-y-1 pt-6 pb-5 px-6">
           <div className="md:hidden flex items-center gap-2 mb-4">
-            <img src={logo} alt="CRASA Logo" className="h-10 w-auto" />
+            <img src={logo} alt="CRASA" className="h-10 w-auto" />
           </div>
           <h2 className="text-left text-xl font-semibold text-gray-800">Iniciar sesión</h2>
           <p className="text-left text-sm text-gray-500">Ingrese sus credenciales para acceder al sistema</p>
@@ -116,6 +119,7 @@ export default function Login() {
           </div>
         </div>
       </div>
+    </div>
     </div>
     )
 }
