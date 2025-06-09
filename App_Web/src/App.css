@@ -6,6 +6,15 @@
   font-weight: 400;
 }
 
+body {
+  overflow: auto;
+  
+}
+
+body::-webkit-scrollbar {
+  display: none;                /* Chrome/Safari */
+}
+
 .logo {
   height: 7em;
   padding: 1.5em;
@@ -20,3 +29,5 @@
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
+
+

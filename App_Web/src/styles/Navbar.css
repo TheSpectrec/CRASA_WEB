@@ -27,7 +27,7 @@
 }
 
 .navbar-container {
-  max-width: 1200px;
+  max-width: 1450px;
   margin: 0 auto;
   display: flex;
   height: 64px;
@@ -48,27 +48,6 @@
   gap: 8px;
   text-decoration: none;
   color: inherit;
-}
-
-.logo-icon {
-  height: 32px;
-  width: 32px;
-  border-radius: 8px;
-  background-color: #3b82f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo-text {
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.logo-title {
-  font-weight: bold;
-  font-size: 20px;
 }
 
 /* Navegación Desktop */
@@ -114,8 +93,8 @@
 }
 
 .nav-item-active {
-  background-color: #3b82f6;
-  color: white;
+  background-color: #E87D38;
+  color: rgb(242, 242, 242);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
@@ -149,7 +128,7 @@
 }
 
 .dropdown-active {
-  background-color: #3b82f6;
+  background-color: #E87D38;
   color: white;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }

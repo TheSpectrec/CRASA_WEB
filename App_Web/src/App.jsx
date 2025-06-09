@@ -4,6 +4,8 @@ import './App.css';
 // Pages
 import Login from './pages/Login.jsx';
 import GeneralPage from './pages/GeneralPage.jsx';
+import ProductsPage from './pages/ProductsPage.jsx';
+import ChartPage from './pages/ChartPage.jsx';
 
 // Components
 import Navbar from './components/Navbar.jsx';
@@ -30,14 +32,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route element={<MainLayout />}>
           <Route path="/general" element={<GeneralPage />} />
-          <Route path="/productos" element={<GeneralPage />} />
+          <Route path="/productos" element={<ProductsPage />} />
           <Route path="/cajas" element={<GeneralPage />} />    
           <Route path="/pesos" element={<GeneralPage />} />    
           <Route path="/usuarios" element={<GeneralPage />} />  
           <Route path="/familias" element={<GeneralPage />} />  
           <Route path="/marcas" element={<GeneralPage />} />    
           <Route path="/cuotas" element={<GeneralPage />} />    
-          <Route path="/graficas" element={<GeneralPage />} />  
+          <Route path="/graficas" element={<ChartPage />} />  
         </Route>
       </Routes>
     </Router>
