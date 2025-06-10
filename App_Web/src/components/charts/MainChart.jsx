@@ -32,7 +32,7 @@ export default function MainChart({ tipoGrafica, datosGraficas }) {
     const showLegend = tipoGrafica === "Vendedor" || tipoGrafica === "Pesos"
   
     return (
-      <Card className="mb-6 ml-2 mr-2">
+      <Card className="mb-2 ml-2 mr-2">
         <CardHeader>
           <CardTitle>Análisis por {tipoGrafica}</CardTitle>
           <CardDescription>{getChartDescription()}</CardDescription>

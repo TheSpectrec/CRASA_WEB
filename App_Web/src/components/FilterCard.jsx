@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./Card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./Select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./Dialog";
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "./Command";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./Filter/Select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./Filter/Dialog";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "./Filter/Command";
 import { Button } from "./Button";
 import { Filter, Search } from "lucide-react";
 import { opcionesFiltros } from "../utils/dataGenerator"; 

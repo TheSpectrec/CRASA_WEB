@@ -4,9 +4,9 @@ import { Search, Filter, Download } from "lucide-react";
 // Components
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/Select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/Dialog";
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "../components/Command";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/Filter/Select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/Filter/Dialog";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "../components/Filter/Command";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/Table";
 
 export default function GeneralPage() {

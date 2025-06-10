@@ -59,4 +59,14 @@ const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
 ))
 DialogTitle.displayName = "DialogTitle"
 
-export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger }
+const DialogDescription = React.forwardRef(({ className, ...props }, ref) => (
+  <div ref={ref} className={`text-sm text-muted-foreground ${className || ""}`} {...props} />
+))
+DialogDescription.displayName = "DialogDescription"
+
+const DialogFooter = ({ className, ...props }) => (
+  <div className={`flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 ${className || ""}`} {...props} />
+)
+DialogFooter.displayName = "DialogFooter"
+
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription }
