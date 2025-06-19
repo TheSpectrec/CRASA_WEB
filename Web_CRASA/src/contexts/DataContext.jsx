@@ -78,9 +78,12 @@ export function DataProvider({ children }) {
           }
         }
         if (u.id === toUserId) {
+          const clientesActuales = u.clientesAsignados || []
+          // Asegurarse de que no se dupliquen los clientes
+          const nuevosClientes = clienteIds.filter((clienteId) => !clientesActuales.includes(clienteId))
           return {
             ...u,
-            clientesAsignados: [...(u.clientesAsignados || []), ...clienteIds],
+            clientesAsignados: [...clientesActuales, ...nuevosClientes],
           }
         }
         return u
