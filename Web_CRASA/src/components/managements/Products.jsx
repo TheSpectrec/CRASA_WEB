@@ -18,84 +18,86 @@ import { useData } from "../../contexts/DataContext"
 import { Plus, Trash2, Edit, Package, Search } from "lucide-react"
 
 export default function Products() {
-    const { productos, familias, addProducto, updateProducto, deleteProducto } = useData()
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [editingProducto, setEditingProducto] = useState(null)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [formData, setFormData] = useState({ codigo: "", descripcion: "", precio: "", familiaId: "" })
+  const { productos, familias, addProducto, updateProducto, deleteProducto } = useData()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingProducto, setEditingProducto] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [formData, setFormData] = useState({ codigo: "", descripcion: "", precio: "", familiaId: "" })
 
-    const itemsPerPage = 20
-    const filteredProductos = productos.filter((producto) => 
-        producto.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const itemsPerPage = 20
+  const filteredProductos = productos.filter((producto) =>
+    producto.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
-    const totalPages = Math.ceil(filteredProductos.length / itemsPerPage)
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const paginatedProductos = filteredProductos.slice(startIndex, startIndex + itemsPerPage)
+  const totalPages = Math.ceil(filteredProductos.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedProductos = filteredProductos.slice(startIndex, startIndex + itemsPerPage)
 
-    const resetForm = () => {
-        setFormData({ codigo: "", descripcion: "", precio: "", familiaId: "" })
-        setEditingProducto(null)
+  const resetForm = () => {
+    setFormData({ codigo: "", descripcion: "", precio: "", familiaId: "" })
+    setEditingProducto(null)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!formData.codigo.trim() || !formData.descripcion.trim() || !formData.precio || !formData.familiaId) return
+
+    const codigoExiste = productos.some((p) => p.codigo === formData.codigo && (!editingProducto || p.id !== editingProducto.id))
+
+    if (codigoExiste) {
+      alert("El código del producto ya existe. Ingrese un código diferente.")
+      return
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        if (!formData.codigo.trim() || !formData.descripcion.trim() || !formData.precio || !formData.familiaId) return
-
-        const codigoExiste = productos.some((p) => p.codigo === formData.codigo && (!editingProducto || p.id !== editingProducto.id))
-
-        if (codigoExiste) {
-            alert("El código del producto ya existe. Ingrese un código diferente.")
-            return
-        }
-
-        const productoData = {
-            codigo: formData.codigo,
-            descripcion: formData.descripcion,
-            precio: Number.parseFloat(formData.precio),
-            familiaId: formData.familiaId
-        }
-
-        if (editingProducto) {
-            updateProducto(editingProducto.id, productoData)
-        } else {
-            addProducto(productoData)
-        }
-
-        resetForm()
-        setIsDialogOpen(false)
+    const productoData = {
+      codigo: formData.codigo,
+      descripcion: formData.descripcion,
+      precio: Number.parseFloat(formData.precio),
+      familiaId: formData.familiaId
     }
 
-    const handleEdit = (producto) => {
-        setEditingProducto(producto)
-        setFormData({ 
-            codigo: producto.codigo, 
-            descripcion: producto.descripcion, 
-            precio: producto.precio.toString(), 
-            familiaId: producto.familiaId 
-        })
-        setIsDialogOpen(true)
+    if (editingProducto) {
+      updateProducto(editingProducto.id, productoData)
+    } else {
+      addProducto(productoData)
     }
 
-    const handleDelete = (id) => {
-        if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-            deleteProducto(id)
-        }
-    }
+    resetForm()
+    setIsDialogOpen(false)
+  }
 
-    const getFamiliaNombre = (familiaId) => {
-        return familias.find((f) => f.id === familiaId)?.nombre || "Familia no encontrada"
-    }
+  const handleEdit = (producto) => {
+    setEditingProducto(producto)
+    // Verificar que la familia existe, sino limpiar la referencia
+    const familiaExiste = familias.some((familia) => familia.id === producto.familiaId)
+    setFormData({
+      codigo: producto.codigo,
+      descripcion: producto.descripcion,
+      precio: producto.precio.toString(),
+      familiaId: familiaExiste ? producto.familiaId : "",
+    })
+    setIsDialogOpen(true)
+  }
 
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value)
-        setCurrentPage(1) 
+  const handleDelete = (id) => {
+    if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
+      deleteProducto(id)
     }
+  }
 
-    return (
-        <div className="space-y-6">
+  const getFamiliaNombre = (familiaId) => {
+    return familias.find((f) => f.id === familiaId)?.nombre || "Familia no encontrada"
+  }
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1)
+  }
+
+  return (
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="flex items-center gap-2">
           <Package className="w-6 h-6" />
@@ -109,7 +111,7 @@ export default function Products() {
               placeholder="Buscar productos..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="pl-8 w-full sm:w-64 bg-white"
+              className="pl-8 w-full sm:w-64"
             />
           </div>
 
@@ -181,8 +183,8 @@ export default function Products() {
                   </Select>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="submit">
+                <div className="flex gap-2 pt-4">
+                  <Button type="submit" className="flex-1">
                     {editingProducto ? "Actualizar" : "Agregar"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -204,50 +206,58 @@ export default function Products() {
             </p>
           </div>
         ) : (
-          paginatedProductos.map((producto) => (
-            <Card key={producto.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg truncate flex items-center gap-2">
-                    <Package className="w-5 h-5 text-green-600 flex-shrink-0" />
-                    <span className="truncate" title={producto.descripcion}>
-                      {producto.descripcion}
-                    </span>
-                  </CardTitle>
-                  <Badge variant="secondary" className="font-mono text-xs">
-                    {producto.codigo}
-                  </Badge>
-                </div>
-              </CardHeader>
+          paginatedProductos.map((producto) => {
+            const familiaNombre = getFamiliaNombre(producto.familiaId)
 
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm text-gray-600">Precio:</p>
-                    <p className="text-lg font-bold text-green-600">${producto.precio.toFixed(2)}</p>
+            return (
+              <Card key={producto.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg flex items-center gap-2 truncate pr-2" title={producto.descripcion}>
+                      <Package className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      <span className="truncate" title={producto.descripcion}>
+                        {producto.descripcion}
+                      </span>
+                    </CardTitle>
+                    <Badge variant="secondary" className="font-mono text-xs">
+                      {producto.codigo}
+                    </Badge>
                   </div>
-                </div>
+                </CardHeader>
 
-                <div>
-                  <p className="text-sm text-gray-600">Familia:</p>
-                  <p className="text-sm font-medium truncate" title={getFamiliaNombre(producto.familiaId)}>
-                    {getFamiliaNombre(producto.familiaId)}
-                  </p>
-                </div>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm text-gray-600">Precio:</p>
+                      <p className="text-lg font-bold text-green-600">${producto.precio.toFixed(2)}</p>
+                    </div>
+                  </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button size="sm" variant="outline" onClick={() => handleEdit(producto)} className="flex-1">
-                    <Edit className="w-3 h-3 mr-1" />
-                    Editar
-                  </Button>
+                  <div>
+                    <p className="text-sm text-gray-600">Familia:</p>
+                    {familiaNombre ? (
+                      <p className="text-sm font-medium truncate" title={familiaNombre}>
+                        {familiaNombre}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-500 italic">No hay familia asignada</p>
+                    )}
+                  </div>
 
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(producto.id)}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                  <div className="flex gap-2 pt-2">
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(producto)} className="flex-1">
+                      <Edit className="w-3 h-3 mr-1" />
+                      Editar
+                    </Button>
+
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(producto.id)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })
         )}
       </div>
 
@@ -287,5 +297,5 @@ export default function Products() {
         </div>
       )}
     </div>
-    )
+  )
 }

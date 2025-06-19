@@ -17,61 +17,67 @@ import { useData } from "../../contexts/DataContext"
 import { Plus, Trash2, Edit, Layers, Search } from "lucide-react"
 
 export default function Families() {
-    const { familias, marcas, addFamilia, updateFamilia, deleteFamilia } = useData()
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [editingFamilia, setEditingFamilia] = useState(null)
-    const [formData, setFormData] = useState({ nombre: "", marcaId: "" })
-    const [searchTerm, setSearchTerm] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
+  const { familias, marcas, addFamilia, updateFamilia, deleteFamilia } = useData()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingFamilia, setEditingFamilia] = useState(null)
+  const [formData, setFormData] = useState({ nombre: "", marcaId: "" })
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
 
-    const itemsPerPage = 20
-    const filteredFamilias = familias.filter((familia) => familia.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
-    const totalPages = Math.ceil(filteredFamilias.length / itemsPerPage)
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const paginatedFamilias = filteredFamilias.slice(startIndex, startIndex + itemsPerPage)
+  const itemsPerPage = 20
+  const filteredFamilias = familias.filter((familia) => familia.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+  const totalPages = Math.ceil(filteredFamilias.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedFamilias = filteredFamilias.slice(startIndex, startIndex + itemsPerPage)
 
-    const resetForm = () => {
-        setFormData({ nombre: "", marcaId: "" })
-        setEditingFamilia(null)
+  const resetForm = () => {
+    setFormData({ nombre: "", marcaId: "" })
+    setEditingFamilia(null)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!formData.nombre.trim() || !formData.marcaId) return
+
+    if (editingFamilia) {
+      updateFamilia(editingFamilia.id, formData)
+    } else {
+      addFamilia(formData)
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        if (!formData.nombre.trim() || !formData.marcaId) return
+    resetForm()
+    setIsDialogOpen(false)
+  }
 
-        if (editingFamilia) {
-            updateFamilia(editingFamilia.id, formData)
-        } else {
-            addFamilia(formData)
-        }
+  const handleEdit = (familia) => {
+    setEditingFamilia(familia)
+    // Verificar que la marca existe, sino limpiar la referencia
+    const marcaExiste = marcas.some((marca) => marca.id === familia.marcaId)
+    setFormData({
+      nombre: familia.nombre,
+      marcaId: marcaExiste ? familia.marcaId : "",
+    })
+    setIsDialogOpen(true)
+  }
 
-        resetForm()
-        setIsDialogOpen(false)
+  const handleDelete = (id) => {
+    if (confirm("¿Estás seguro de que quieres eliminar esta familia?")) {
+      deleteFamilia(id)
     }
+  }
 
-    const handleEdit = (familia) => {
-        setEditingFamilia(familia)
-        setFormData({ nombre: familia.nombre, marcaId: familia.marcaId })
-        setIsDialogOpen(true)
-    }
+  const getMarcaNombre = (marcaId) => {
+    const marca = marcas.find((m) => m.id === marcaId)
+    return marca ? marca.nombre : null
+  }
 
-    const handleDelete = (id) => {
-        if (confirm("¿Estás seguro de que quieres eliminar esta familia?")) {
-            deleteFamilia(id)
-        }
-    }
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1)
+  }
 
-    const getMarcaNombre = (marcaId) => {
-        return
-    }
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value)
-        setCurrentPage(1) 
-    }
-
-    return (
-        <div className="space-y-6">
+  return (
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="flex items-center gap-2">
           <Layers className="w-6 h-6" />
@@ -85,7 +91,7 @@ export default function Families() {
               placeholder="Buscar familias..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="pl-8 w-full sm:w-64 bg-white"
+              className="pl-8 w-full sm:w-64"
             />
           </div>
 
@@ -132,8 +138,8 @@ export default function Families() {
                   </Select>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="submit">
+                <div className="flex gap-2 pt-4">
+                  <Button type="submit" className="flex-1">
                     {editingFamilia ? "Actualizar" : "Agregar"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -155,38 +161,46 @@ export default function Families() {
             </p>
           </div>
         ) : (
-          paginatedFamilias.map((familia) => (
-            <Card key={familia.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                  <span className="truncate" title={familia.nombre}>
-                    {familia.nombre}
-                  </span>
-                </CardTitle>
-              </CardHeader>
+          paginatedFamilias.map((familia) => {
+            const marcaNombre = getMarcaNombre(familia.marcaId)
 
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">Marca:</p>
-                  <p className="text-sm font-medium truncate" title={getMarcaNombre(familia.marcaId)}>
-                    {getMarcaNombre(familia.marcaId)}
-                  </p>
-                </div>
+            return (
+              <Card key={familia.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                    <span className="truncate" title={familia.nombre}>
+                      {familia.nombre}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
 
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleEdit(familia)} className="flex-1">
-                    <Edit className="w-3 h-3 mr-1" />
-                    Editar
-                  </Button>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Marca:</p>
+                    {marcaNombre ? (
+                      <p className="text-sm font-medium truncate" title={marcaNombre}>
+                        {marcaNombre}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-500 italic pt-2 pb-1">No hay marca asignada</p>
+                    )}
+                  </div>
 
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(familia.id)}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(familia)} className="flex-1">
+                      <Edit className="w-3 h-3 mr-1" />
+                      Editar
+                    </Button>
+
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(familia.id)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })
         )}
       </div>
 
@@ -226,5 +240,5 @@ export default function Families() {
         </div>
       )}
     </div>
-    )
+  )
 }

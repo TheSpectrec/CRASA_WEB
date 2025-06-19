@@ -44,7 +44,9 @@ export default function Brands() {
 
   const handleEdit = (marca) => {
     setEditingMarca(marca)
-    setFormData({ nombre: marca.nombre, empresaIds: marca.empresaIds || [] })
+    // Filtrar solo empresas que existen
+    const empresasValidas = (marca.empresaIds || []).filter((id) => empresas.some((empresa) => empresa.id === id))
+    setFormData({ nombre: marca.nombre, empresaIds: empresasValidas })
     setIsDialogOpen(true)
   }
 
@@ -55,8 +57,14 @@ export default function Brands() {
   }
 
   const getEmpresasNombres = (empresaIds) => {
-    if (!empresaIds || empresaIds.length === 0) return "Sin empresas asignadas"
-    return empresaIds.map((id) => empresas.find((e) => e.id === id)?.nombre || "Empresa no encontrada")
+    if (!empresaIds || empresaIds.length === 0) return []
+
+    // Solo devolver empresas que existen
+    const nombresValidos = empresaIds
+      .map((id) => empresas.find((e) => e.id === id)?.nombre)
+      .filter((nombre) => nombre !== undefined)
+
+    return nombresValidos
   }
 
   return (
@@ -113,42 +121,50 @@ export default function Brands() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {marcas.map((marca) => (
-          <Card key={marca.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Tag className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                <span className="truncate" title={marca.nombre}>
-                  {marca.nombre}
-                </span>
-              </CardTitle>
-            </CardHeader>
+        {marcas.map((marca) => {
+          const empresasValidas = getEmpresasNombres(marca.empresaIds)
 
-            <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-600">Empresas:</p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {getEmpresasNombres(marca.empresaIds).map((nombre, index) => (
-                    <span key={index} className="text-xs bg-[#F7E4D7] text-[#E77A34] px-2 py-1 rounded">
-                      {nombre}
-                    </span>
-                  ))}
+          return (
+            <Card key={marca.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-purple-600 flex-shrink-0" />
+                  <span className="truncate" title={marca.nombre}>
+                    {marca.nombre}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Empresas:</p>
+                  {empresasValidas.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {empresasValidas.map((nombre, index) => (
+                        <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          {nombre}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 italic pt-2 pb-1">No hay empresas asignadas</p>
+                  )}
                 </div>
-              </div>
 
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => handleEdit(marca)} className="flex-1">
-                  <Edit className="w-3 h-3 mr-1" />
-                  Editar
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(marca)} className="flex-1">
+                    <Edit className="w-3 h-3 mr-1" />
+                    Editar
+                  </Button>
 
-                <Button size="sm" variant="destructive" onClick={() => handleDelete(marca.id)}>
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(marca.id)}>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
     </div>
   )

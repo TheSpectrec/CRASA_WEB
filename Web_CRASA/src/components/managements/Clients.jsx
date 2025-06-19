@@ -17,68 +17,68 @@ import { useData } from "../../contexts/DataContext"
 import { Plus, Trash2, Edit, UserCheck, Search } from "lucide-react"
 
 export default function Clients() {
-    const { clientes, addCliente, updateCliente, deleteCliente } = useData()
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [editingCliente, setEditingCliente] = useState(null)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [formData, setFormData] = useState({ codigo: "", nombre: "" })
+  const { clientes, addCliente, updateCliente, deleteCliente } = useData()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingCliente, setEditingCliente] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [formData, setFormData] = useState({ codigo: "", nombre: "" })
 
-    const itemsPerPage = 20
-    const filteredClientes = clientes.filter((cliente) =>
-        cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cliente.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const itemsPerPage = 20
+  const filteredClientes = clientes.filter((cliente) =>
+    cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    cliente.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
-    const totalPages = Math.ceil(filteredClientes.length / itemsPerPage)
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const paginatedClientes = filteredClientes.slice(startIndex, startIndex + itemsPerPage)
+  const totalPages = Math.ceil(filteredClientes.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedClientes = filteredClientes.slice(startIndex, startIndex + itemsPerPage)
 
-    const resetForm = () => {
-        setFormData({ codigo: "", nombre: "" })
-        setEditingCliente(null)
+  const resetForm = () => {
+    setFormData({ codigo: "", nombre: "" })
+    setEditingCliente(null)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!formData.codigo.trim() || !formData.nombre.trim()) return
+
+    const codigoExiste = clientes.some((c) => c.codigo === formData.codigo && (!editingCliente || c.id !== editingCliente.id))
+
+    if (codigoExiste) {
+      alert("El código ya existe. Por favor, utiliza otro.")
+      return
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        if (!formData.codigo.trim() || !formData.nombre.trim()) return
-
-        const codigoExiste = clientes.some((c) => c.codigo === formData.codigo && (!editingCliente || c.id !== editingCliente.id))
-
-        if (codigoExiste) {
-            alert("El código ya existe. Por favor, utiliza otro.")
-            return
-        }
-
-        if (editingCliente) {
-            updateCliente(editingCliente.id, formData)
-        } else {
-            addCliente(formData)
-        }
-
-        resetForm()
-        setIsDialogOpen(false)
+    if (editingCliente) {
+      updateCliente(editingCliente.id, formData)
+    } else {
+      addCliente(formData)
     }
 
-    const handleEdit = (cliente) => {
-        setEditingCliente(cliente)
-        setFormData({ codigo: cliente.codigo, nombre: cliente.nombre })
-        setIsDialogOpen(true)
-    }
+    resetForm()
+    setIsDialogOpen(false)
+  }
 
-    const handleDelete = (id) => {
-        if (confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
-            deleteCliente(id)
-        }
-    }
+  const handleEdit = (cliente) => {
+    setEditingCliente(cliente)
+    setFormData({ codigo: cliente.codigo, nombre: cliente.nombre })
+    setIsDialogOpen(true)
+  }
 
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value)
-        setCurrentPage(1) 
+  const handleDelete = (id) => {
+    if (confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
+      deleteCliente(id)
     }
+  }
 
-    return (
-        <div className="space-y-6">
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1)
+  }
+
+  return (
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="flex items-center gap-2">
           <UserCheck className="w-6 h-6" />
@@ -92,13 +92,13 @@ export default function Clients() {
               placeholder="Buscar clientes..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="pl-8 w-full sm:w-64 bg-white"
+              className="pl-8 w-full sm:w-64"
             />
           </div>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={resetForm}> 
+              <Button onClick={resetForm}>
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Cliente
               </Button>
@@ -131,8 +131,8 @@ export default function Clients() {
                   />
                 </div>
 
-                <div className="flex justify-end  gap-2 pt-4">
-                  <Button type="submit">
+                <div className="flex gap-2 pt-4">
+                  <Button type="submit" className="flex-1">
                     {editingCliente ? "Actualizar" : "Agregar"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -145,7 +145,7 @@ export default function Clients() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {paginatedClientes.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <UserCheck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -158,7 +158,7 @@ export default function Clients() {
             <Card key={cliente.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg truncate flex items-center gap-2">
+                  <CardTitle className="text-lg flex items-center gap-2 truncate pr-2" title={cliente.nombre}>
                     <UserCheck className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     <span className="truncate" title={cliente.nombre}>
                       {cliente.nombre}
@@ -228,5 +228,5 @@ export default function Clients() {
         </div>
       )}
     </div>
-    )
+  )
 }

@@ -79,7 +79,6 @@ export function DataProvider({ children }) {
         }
         if (u.id === toUserId) {
           const clientesActuales = u.clientesAsignados || []
-          // Asegurarse de que no se dupliquen los clientes
           const nuevosClientes = clienteIds.filter((clienteId) => !clientesActuales.includes(clienteId))
           return {
             ...u,
@@ -158,6 +157,15 @@ export function DataProvider({ children }) {
   }
 
   const deleteCliente = (id) => {
+    // Solo remover cliente de vendedores que lo tengan asignado
+    setUsuarios((prev) =>
+      prev.map((usuario) => ({
+        ...usuario,
+        clientesAsignados: usuario.clientesAsignados?.filter((clienteId) => clienteId !== id) || [],
+      })),
+    )
+
+    // Eliminar el cliente
     setClientes((prev) => prev.filter((c) => c.id !== id))
   }
 

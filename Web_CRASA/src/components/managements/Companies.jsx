@@ -16,49 +16,48 @@ import { useData } from "../../contexts/DataContext"
 import { Plus, Edit, Trash2, Building2 } from "lucide-react"
 
 export default function Companies() {
-    const { empresas, addEmpresa, updateEmpresa, deleteEmpresa } = useData()
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [editingEmpresa, setEditingEmpresa] = useState(null)
-    const [formData, setFormData] = useState ({ nombre : "" })
+  const { empresas, addEmpresa, updateEmpresa, deleteEmpresa } = useData()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingEmpresa, setEditingEmpresa] = useState(null)
+  const [formData, setFormData] = useState({ nombre: "" })
 
-    const resetForm = () => {
-        setFormData({ nombre: "" })
-        setEditingEmpresa(null)
+  const resetForm = () => {
+    setFormData({ nombre: "" })
+    setEditingEmpresa(null)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!formData.nombre.trim()) return
+
+    if (editingEmpresa) {
+      updateEmpresa(editingEmpresa.id, formData)
+    } else {
+      addEmpresa(formData)
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        if (!formData.nombre.trim()) return
+    resetForm()
+    setIsDialogOpen(false)
+  }
 
-        if (editingEmpresa) {
-            updateEmpresa(editingEmpresa.id, formData)
-        } else {
-            addEmpresa(formData)
-        }
+  const handleEdit = (empresa) => {
+    setEditingEmpresa(empresa)
+    setFormData({ nombre: empresa.nombre })
+    setIsDialogOpen(true)
+  }
 
-        resetForm()
-        setIsDialogOpen(false)
+  const handleDelete = (id) => {
+    if (confirm("¿Estás seguro de que deseas eliminar esta empresa?")) {
+      deleteEmpresa(id)
     }
+  }
 
-    const handleEdit = (empresa) => {
-        setEditingEmpresa(empresa)
-        setFormData({ nombre: empresa.nombre })
-        setIsDialogOpen(true)
-    }
-
-    const handleDelete = (id) => {
-        if (confirm("¿Estás seguro de que deseas eliminar esta empresa?")) {
-            deleteEmpresa(id)
-        }
-    }
-
-    return (
-        <div className="space-y-6">
+  return (
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Building2 className="w-6 h-6" />
           <span className="text-lg font-medium">Gestión de Empresas</span>
-
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -85,8 +84,8 @@ export default function Companies() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="submit">
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="flex-1">
                   {editingEmpresa ? "Actualizar" : "Agregar"}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -98,7 +97,7 @@ export default function Companies() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4  gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {empresas.map((empresa) => (
           <Card key={empresa.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
@@ -126,5 +125,5 @@ export default function Companies() {
         ))}
       </div>
     </div>
-    )
+  )
 }

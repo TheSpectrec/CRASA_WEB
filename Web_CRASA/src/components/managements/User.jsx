@@ -21,85 +21,89 @@ import { useData } from "../../contexts/DataContext"
 import { Plus, Edit, Trash2, Users, ArrowRightLeft } from "lucide-react"
 
 export default function User() {
-    const { usuarios, addUsuario, updateUsuario, deleteUsuario } = useData()
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [editingUser, setEditingUser] = useState(null)
-    const [transferUser, setTransferUser] = useState(null)
+  const { usuarios, addUsuario, updateUsuario, deleteUsuario, clientes } = useData()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
+  const [transferUser, setTransferUser] = useState(null)
 
-    const [formData, setFormData] = useState({
-        nombreCompleto: "",
-        correo: "",
-        contraseña: "",
-        rol: "",
-        clientesAsignados: [],
+  const [formData, setFormData] = useState({
+    nombreCompleto: "",
+    correo: "",
+    contraseña: "",
+    rol: "",
+    clientesAsignados: [],
+  })
+
+  const resetForm = () => {
+    setFormData({
+      nombreCompleto: "",
+      correo: "",
+      contraseña: "",
+      rol: "",
+      clientesAsignados: [],
     })
+    setEditingUser(null)
+  }
 
-    const resetForm = () => {
-        setFormData({
-            nombreCompleto: "",
-            correo: "",
-            contraseña: "",
-            rol: "",
-            clientesAsignados: [],
-        })
-        setEditingUser(null)
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!formData.nombreCompleto || !formData.correo || !formData.rol) return
+
+    const userData = {
+      nombreCompleto: formData.nombreCompleto,
+      correo: formData.correo,
+      contraseña: formData.contraseña,
+      rol: formData.rol,
+      ...(formData.rol === "Vendedor" && { clientesAsignados: formData.clientesAsignados }),
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        if (!formData.nombreCompleto || !formData.correo || !formData.rol) return
-
-        const userData = {
-            nombreCompleto: formData.nombreCompleto,
-            correo: formData.correo,
-            contraseña: formData.contraseña,
-            rol: formData.rol,
-            ...(formData.rol === "Vendedor" && { clientesAsignados: formData.clientesAsignados }),
-        }
-
-        if (editingUser) {
-            updateUsuario(editingUser.id, userData)
-        } else {
-            addUsuario(userData)
-        }
-
-        resetForm()
-        setIsDialogOpen(false)
+    if (editingUser) {
+      updateUsuario(editingUser.id, userData)
+    } else {
+      addUsuario(userData)
     }
 
-    const handleEdit = (usuario) => {
-        setEditingUser(usuario)
-        setFormData({
-            nombreCompleto: usuario.nombreCompleto,
-            correo: usuario.correo,
-            contraseña: "usuario.contraseña", 
-            rol: usuario.rol,
-            clientesAsignados: usuario.clientesAsignados || [],
-        })
-        setIsDialogOpen(true)
-    }
+    resetForm()
+    setIsDialogOpen(false)
+  }
 
-    const handleDelete = (id) => {
-        if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-            deleteUsuario(id)
-        }
-    }
+  const handleEdit = (usuario) => {
+    setEditingUser(usuario)
+    // Filtrar solo clientes que existen
+    const clientesValidos = (usuario.clientesAsignados || []).filter((clienteId) =>
+      clientes.some((cliente) => cliente.id === clienteId),
+    )
+    setFormData({
+      nombreCompleto: usuario.nombreCompleto,
+      correo: usuario.correo,
+      contraseña: usuario.contraseña,
+      rol: usuario.rol,
+      clientesAsignados: clientesValidos,
+    })
+    setIsDialogOpen(true)
+  }
 
-    const getRoleBadgeColor = (rol) => {
-        switch (rol) {
-            case "Admin" :
-                return "bg-red-100 text-red-800"
-            case "Supervisor" :
-                return "bg-blue-100 text-blue-800"
-            case "Vendedor" :
-                return "bg-green-100 text-green-800"
-            default:
-                return "bg-gray-100 text-gray-800"
-        }
+  const handleDelete = (id) => {
+    if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+      deleteUsuario(id)
     }
+  }
 
-    return (
-        <div className="space-y-6">
+  const getRoleBadgeColor = (rol) => {
+    switch (rol) {
+      case "Admin":
+        return "bg-red-100 text-red-800"
+      case "Supervisor":
+        return "bg-blue-100 text-blue-800"
+      case "Vendedor":
+        return "bg-green-100 text-green-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  return (
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Users className="w-6 h-6" />
@@ -181,8 +185,8 @@ export default function User() {
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="submit">
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="flex-1">
                   {editingUser ? "Actualizar" : "Agregar"}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -243,5 +247,5 @@ export default function User() {
         />
       )}
     </div>
-    )
+  )
 }
