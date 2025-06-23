@@ -25,7 +25,7 @@ export default function Products() {
   const [editingProducto, setEditingProducto] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [formData, setFormData] = useState({ description: "", price: "", familyId: "" })
+  const [formData, setFormData] = useState({ codigo:"", description: "", price: "", familyId: "" })
 
   const itemsPerPage = 20
 
@@ -150,22 +150,21 @@ export default function Products() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
+                  <Label htmlFor="codigo">Código</Label>
+                  <Input
+                    id="codigo"
+                    value={formData.codigo}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, codigo: e.target.value }))}
+                    placeholder="Código único del producto"
+                    required
+                  />
+                </div>
+                <div>
                   <Label htmlFor="description">Descripción</Label>
                   <Input
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="price">Precio</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
                     required
                   />
                 </div>
@@ -219,10 +218,10 @@ export default function Products() {
                   <CardTitle className="text-lg flex items-center gap-2 truncate pr-2" title={producto.description}>
                     <Package className="w-5 h-5 text-green-600 flex-shrink-0" />
                     <span className="truncate">{producto.description}</span>
-                  </CardTitle>
+                  </CardTitle>     
                   <Badge variant="secondary" className="font-mono text-xs">
-                    ${producto.price.toFixed(2)}
-                  </Badge>
+                      {producto.codigo}
+                    </Badge>            
                 </div>
               </CardHeader>
 
