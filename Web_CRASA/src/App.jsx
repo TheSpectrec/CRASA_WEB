@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import GeneralPage from "./pages/GeneralPage";
 import Managements from "./pages/Managements";
 import QuotasPage from "./pages/QuotasPage";
+import ChartPage from "./pages/ChartPage";
 
 // Contexts
 import { AuthProvider } from './contexts/AuthContext'
@@ -41,7 +42,7 @@ function App() {
           <Route path="/familias" element={<GeneralPage />} />  
           <Route path="/marcas" element={<GeneralPage />} />    
           <Route path="/cuotas" element={<QuotasPage />} />    
-          <Route path="/graficas" element={<GeneralPage />} />  
+          <Route path="/graficas" element={<ChartPage />} />  
         </Route>
         </Routes>
       </Router>

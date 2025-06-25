@@ -18,24 +18,24 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-.bg-red {
-  background-color: #fef2f2;
+.bg-brown {
+  background-color: #c8c4c3;
 }
 
-.bg-blue {
-  background-color: #eff6ff;
+.bg-orange {
+  background-color: #ffe5d4;
 }
 
 .bg-green {
   background-color: #f0fdf4;
 }
 
-.text-red {
-  color: #991b1b;
+.text-brown {
+  color: #5d3a2d;
 }
 
-.text-blue {
-  color: #1e40af;
+.text-orange {
+  color: #e47328;
 }
 
 .text-green {

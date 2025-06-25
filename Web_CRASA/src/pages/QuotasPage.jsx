@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { salesData } from '../contexts/SalesData'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import  Tabs  from '@/components/ui/tabs'
 import Select from "../components/Select"
 
@@ -70,8 +70,8 @@ function QuotasPage() {
 
     // Brand colors 
     const brandColors = {
-        COSTEÑA: 'red',
-        JUMEX: 'blue',
+        COSTEÑA: 'brown',
+        JUMEX: 'orange',
         TOTIS: 'green',
     }
 

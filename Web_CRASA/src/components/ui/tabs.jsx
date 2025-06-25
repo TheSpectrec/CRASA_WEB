@@ -9,8 +9,8 @@ function Tabs({ selectedTab, onTabChange, tabs }) {
         <div className="grid grid-cols-2 bg-gray-100 rounded-lg p-1">
           {tabs.map((tab) => {
             const activeClasses = {
-              red: "bg-red-50 text-red-800",
-              blue: "bg-blue-50 text-blue-800",
+              brown: "bg-[#c8c4c3] text-[#5d3a2d]",
+              orange: "bg-[#ffe5d4] text-[#e47328]",
               green: "bg-green-50 text-green-800",
             }
 

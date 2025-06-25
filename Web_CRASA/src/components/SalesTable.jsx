@@ -2,8 +2,8 @@ import "../styles/salesTable.css";
 
 function SalesTable({ data, color }) {
     const colorClasses = {
-        headerbg: color === "red" ? "bg-red" : color === "blue" ? "bg-blue" : "bg-green",
-        headertext: color === "red" ? "text-red" : color === "blue" ? "text-blue" : "text-green",
+        headerbg: color === "brown" ? "bg-brown" : color === "orange" ? "bg-orange" : "bg-green",
+        headerText: color === "brown" ? "text-brown" : color === "orange" ? "text-orange" : "text-green",
         negativeText: "text-negative",
         positiveText: "text-positive",
     }
@@ -16,7 +16,7 @@ function SalesTable({ data, color }) {
     return (
         <div className="table-container">
             <table className="sales-table">
-                <thead className={`table-header ${colorClasses.headerBg}`}>
+                <thead className={`table-header ${colorClasses.headerbg}`}>
                     <tr>
                         <th className={`${colorClasses.headerText} text-left`}>CAJAS</th>
                         <th className={`${colorClasses.headerText} text-right`}>CUOTA</th>

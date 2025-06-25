@@ -3,9 +3,9 @@ import "../styles/SalesSummary.css";
 
 function SalesSummary({ title, color, quota, progress, difference }) {
     const colorClasses = {
-        bg: color === "red" ? "bg-red-light" : color === "blue" ? "bg-blue-light" : "bg-green-light",
-        border: color === "red" ? "border-red" : color === "blue" ? "border-blue" : "border-green",
-        text: color === "red" ? "text-red-dark" : color === "blue" ? "text-blue-dark" : "text-green-dark",
+        bg: color === "brown" ? "bg-brown-light" : color === "orange" ? "bg-orange-light" : "bg-green-light",
+        border: color === "brown" ? "border-brown" : color === "orange" ? "border-orange" : "border-green",
+        text: color === "brown" ? "text-brown-dark" : color === "orange" ? "text-orange-dark" : "text-green-dark",
     }
 
     return (
