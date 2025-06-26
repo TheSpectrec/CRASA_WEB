@@ -4,11 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 // Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Filters } from '../components/Filters';
 
 // Icons
 import { Search, Filter, Download } from 'lucide-react';
@@ -19,21 +16,6 @@ import * as XLSX from 'xlsx';
 export default function GeneralPage() {
     // Referencia para el contenedor principal
     const containerRef = useRef(null);
-
-    // Estados para los filtros
-    const [empresaSeleccionada, setEmpresaSeleccionada] = useState("");
-    const [vendedorSeleccionado, setVendedorSeleccionado] = useState("");
-    const [marcaSeleccionada, setMarcaSeleccionada] = useState("");
-    const [familiaSeleccionada, setFamiliaSeleccionada] = useState("");
-    const [clienteSeleccionado, setClienteSeleccionado] = useState("");
-    const [productoSeleccionado, setProductoSeleccionado] = useState("");
-
-    // Estados para los diálogos
-    const [dialogoVendedorAbierto, setDialogoVendedorAbierto] = useState(false);
-    const [dialogoMarcaAbierto, setDialogoMarcaAbierto] = useState(false);
-    const [dialogoFamiliaAbierto, setDialogoFamiliaAbierto] = useState(false);
-    const [dialogoClienteAbierto, setDialogoClienteAbierto] = useState(false);
-    const [dialogoProductoAbierto, setDialogoProductoAbierto] = useState(false);
 
     // Datos para las tablas
     const [datosCajas, setDatosCajas] = useState([]);
@@ -236,140 +218,9 @@ export default function GeneralPage() {
         setDatosPesos(datosPesosEstaticos);
     }, []);
 
-    // Resetear filtros dependientes cuando cambia la empresa
-    useEffect(() => {
-        if (empresaSeleccionada) {
-            setVendedorSeleccionado("");
-            setMarcaSeleccionada("");
-            setFamiliaSeleccionada("");
-            setClienteSeleccionado("");
-            setProductoSeleccionado("");
-        }
-    }, [empresaSeleccionada]);
-
-    // Datos de ejemplo
-    const empresas = ["Empresa A", "Empresa B", "Empresa C"]
-
-    const vendedores = [
-        "Juan Pérez",
-        "María López",
-        "Carlos Rodríguez",
-        "Ana Martínez",
-        "Pedro Sánchez",
-        "Laura Gómez",
-        "Roberto Fernández",
-        "Sofía Torres",
-        "Miguel Ramírez",
-        "Daniela Ortiz",
-        "Javier Ruiz",
-        "Valentina Castro",
-        "Alejandro Díaz",
-    ]
-
-    const marcas = [
-        "Nike",
-        "Adidas",
-        "Puma",
-        "Reebok",
-        "Under Armour",
-        "Samsung",
-        "LG",
-        "Sony",
-        "Panasonic",
-        "Philips",
-        "Toyota",
-        "Honda",
-        "Ford",
-        "Chevrolet",
-        "Nissan",
-    ]
-
-    const familias = [
-        "Calzado",
-        "Ropa",
-        "Accesorios",
-        "Televisores",
-        "Smartphones",
-        "Electrodomésticos",
-        "Sedán",
-        "SUV",
-        "Camioneta",
-        "Motocicleta",
-        "Deportivo",
-        "Casual",
-        "Formal",
-        "Infantil",
-        "Premium",
-    ]
-
-    const clientes = [
-        "Cliente A1",
-        "Cliente A2",
-        "Cliente A3",
-        "Cliente A4",
-        "Cliente A5",
-        "Cliente B1",
-        "Cliente B2",
-        "Cliente B3",
-        "Cliente B4",
-        "Cliente B5",
-        "Cliente C1",
-        "Cliente C2",
-        "Cliente C3",
-        "Cliente C4",
-        "Cliente C5",
-        "Cliente D1",
-        "Cliente D2",
-        "Cliente D3",
-        "Cliente E1",
-        "Cliente E2",
-    ]
-
-    const productos = [
-        "Air Max",
-        "Air Force 1",
-        "Jordan",
-        "Cortez",
-        "Blazer",
-        "Superstar",
-        "Stan Smith",
-        "Gazelle",
-        "Ultra Boost",
-        "NMD",
-        "Galaxy S23",
-        "Galaxy Tab",
-        "Smart TV QLED",
-        "Refrigerador",
-        "Lavadora",
-        "OLED TV",
-        "Smartphone G9",
-        "Refrigerador InstaView",
-        "Lavadora TurboWash",
-        "Corolla",
-        "RAV4",
-        "Camry",
-        "Highlander",
-        "Tacoma",
-        "Civic",
-        "Accord",
-        "CR-V",
-        "Pilot",
-        "Ridgeline",
-    ]
-
-    // Limpiar todos los filtros
-    const limpiarFiltros = () => {
-        setEmpresaSeleccionada("");
-        setVendedorSeleccionado("");
-        setMarcaSeleccionada("");
-        setFamiliaSeleccionada("");
-        setClienteSeleccionado("");
-        setProductoSeleccionado("");
-    }
-
     // Función para exportar datos a Excel
-  const exportarDatos = () => {
-    try {
+    const exportarDatos = (filtrosAplicados) => {
+      try {
       // Crear un nuevo libro de trabajo
       const workbook = XLSX.utils.book_new()
 
@@ -513,15 +364,7 @@ export default function GeneralPage() {
       XLSX.utils.book_append_sheet(workbook, worksheetCajas, "Datos Cajas")
       XLSX.utils.book_append_sheet(workbook, worksheetPesos, "Datos Pesos")
 
-      // Crear información de filtros aplicados
-      const filtrosAplicados = []
-      if (empresaSeleccionada) filtrosAplicados.push({ Filtro: "Empresa", Valor: empresaSeleccionada })
-      if (vendedorSeleccionado) filtrosAplicados.push({ Filtro: "Vendedor", Valor: vendedorSeleccionado })
-      if (marcaSeleccionada) filtrosAplicados.push({ Filtro: "Marca", Valor: marcaSeleccionada })
-      if (familiaSeleccionada) filtrosAplicados.push({ Filtro: "Familia", Valor: familiaSeleccionada })
-      if (clienteSeleccionado) filtrosAplicados.push({ Filtro: "Cliente", Valor: clienteSeleccionado })
-      if (productoSeleccionado) filtrosAplicados.push({ Filtro: "Producto", Valor: productoSeleccionado })
-
+      // Agregar filtros aplicados si existen
       if (filtrosAplicados.length > 0) {
         const worksheetFiltros = XLSX.utils.json_to_sheet(filtrosAplicados)
         XLSX.utils.book_append_sheet(workbook, worksheetFiltros, "Filtros Aplicados")
@@ -545,232 +388,11 @@ export default function GeneralPage() {
     return (
         <div className="min-h-screen bg-gray-50 py-6">
       <div className="container mx-auto" ref={containerRef}>
-        <Card className="mb-6 mr-4 ml-4">
-          <CardHeader>
-            <div>
-              <CardTitle>Panel de Control de Datos</CardTitle>
-              <CardDescription>Seleccione los filtros para visualizar los datos</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {/* Filtro de Empresa */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Empresa</label>
-                <Select value={empresaSeleccionada} onValueChange={setEmpresaSeleccionada}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar empresa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {empresas.map((empresa) => (
-                      <SelectItem key={empresa} value={empresa}>
-                        {empresa}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Filtro de Vendedor */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Vendedor</label>
-                <Dialog open={dialogoVendedorAbierto} onOpenChange={setDialogoVendedorAbierto}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {vendedorSeleccionado || "Seleccionar vendedor"}
-                      <Search className="h-4 w-4 opacity-50" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Seleccionar Vendedor</DialogTitle>
-                    </DialogHeader>
-                    <Command>
-                      <CommandInput placeholder="Buscar vendedor..." />
-                      <CommandList>
-                        <CommandEmpty>No se encontraron vendedores.</CommandEmpty>
-                        <CommandGroup>
-                          {vendedores.map((vendedor) => (
-                            <CommandItem
-                              key={vendedor}
-                              onSelect={() => {
-                                setVendedorSeleccionado(vendedor)
-                                setDialogoVendedorAbierto(false)
-                              }}
-                            >
-                              {vendedor}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Filtro de Marca */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Marca</label>
-                <Dialog open={dialogoMarcaAbierto} onOpenChange={setDialogoMarcaAbierto}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {marcaSeleccionada || "Seleccionar marca"}
-                      <Search className="h-4 w-4 opacity-50" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Seleccionar Marca</DialogTitle>
-                    </DialogHeader>
-                    <Command>
-                      <CommandInput placeholder="Buscar marca..." />
-                      <CommandList>
-                        <CommandEmpty>No se encontraron marcas.</CommandEmpty>
-                        <CommandGroup>
-                          {marcas.map((marca) => (
-                            <CommandItem
-                              key={marca}
-                              onSelect={() => {
-                                setMarcaSeleccionada(marca)
-                                setDialogoMarcaAbierto(false)
-                              }}
-                            >
-                              {marca}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Filtro de Familia */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Familia</label>
-                <Dialog open={dialogoFamiliaAbierto} onOpenChange={setDialogoFamiliaAbierto}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {familiaSeleccionada || "Seleccionar familia"}
-                      <Search className="h-4 w-4 opacity-50" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Seleccionar Familia</DialogTitle>
-                    </DialogHeader>
-                    <Command>
-                      <CommandInput placeholder="Buscar familia..." />
-                      <CommandList>
-                        <CommandEmpty>No se encontraron familias.</CommandEmpty>
-                        <CommandGroup>
-                          {familias.map((familia) => (
-                            <CommandItem
-                              key={familia}
-                              onSelect={() => {
-                                setFamiliaSeleccionada(familia)
-                                setDialogoFamiliaAbierto(false)
-                              }}
-                            >
-                              {familia}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Filtro de Cliente */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Cliente</label>
-                <Dialog open={dialogoClienteAbierto} onOpenChange={setDialogoClienteAbierto}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {clienteSeleccionado || "Seleccionar cliente"}
-                      <Search className="h-4 w-4 opacity-50" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Seleccionar Cliente</DialogTitle>
-                    </DialogHeader>
-                    <Command>
-                      <CommandInput placeholder="Buscar cliente..." />
-                      <CommandList>
-                        <CommandEmpty>No se encontraron clientes.</CommandEmpty>
-                        <CommandGroup>
-                          {clientes.map((cliente) => (
-                            <CommandItem
-                              key={cliente}
-                              onSelect={() => {
-                                setClienteSeleccionado(cliente)
-                                setDialogoClienteAbierto(false)
-                              }}
-                            >
-                              {cliente}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Filtro de Producto */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Producto</label>
-                <Dialog open={dialogoProductoAbierto} onOpenChange={setDialogoProductoAbierto}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      {productoSeleccionado || "Seleccionar producto"}
-                      <Search className="h-4 w-4 opacity-50" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Seleccionar Producto</DialogTitle>
-                    </DialogHeader>
-                    <Command>
-                      <CommandInput placeholder="Buscar producto..." />
-                      <CommandList>
-                        <CommandEmpty>No se encontraron productos.</CommandEmpty>
-                        <CommandGroup>
-                          {productos.map((producto) => (
-                            <CommandItem
-                              key={producto}
-                              onSelect={() => {
-                                setProductoSeleccionado(producto)
-                                setDialogoProductoAbierto(false)
-                              }}
-                            >
-                              {producto}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={limpiarFiltros}>
-                  <Filter className="h-4 w-4 mr-2" />
-                  Limpiar filtros
-                </Button>
-              </div>
-              <Button variant="outline" size="sm" onClick={exportarDatos}>
-                <Download className="h-4 w-4 mr-2" />
-                Exportar datos
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Filters 
+          onExportar={exportarDatos}
+          titulo="Panel de Control de Datos"
+          descripcion="Seleccione los filtros para visualizar los datos"
+        />
 
         {/* Tabla de Cajas */}
         <Card className="mb-6 ml-4 mr-4">
