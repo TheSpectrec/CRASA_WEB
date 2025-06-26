@@ -20,12 +20,24 @@ export default function Customers() {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [formData, setFormData] = useState({ customerCode: "", name: "" })
+  const [vendedores, setVendedores] = useState([])
 
   const itemsPerPage = 20
 
   useEffect(() => {
-    fetchClientes()
+    fetchClientes(),
+    fetchVendedores()
   }, [])
+
+  const fetchVendedores = async () => {
+  try {
+    const res = await fetch("http://localhost:8080/api/users/vendedores")
+    const data = await res.json()
+    setVendedores(data)
+  } catch (error) {
+    console.error("Error al cargar vendedores:", error)
+  }
+}
 
   const fetchClientes = async () => {
     try {
@@ -54,11 +66,18 @@ export default function Customers() {
       return
     }
 
+    const payload = {
+  customerCode: formData.customerCode,
+  name: formData.name,
+  ...(formData.vendedor && formData.vendedor.id ? { vendedor: formData.vendedor } : {})
+}
+
+
     try {
       if (editingCliente) {
-        await update(editingCliente.id, formData)
+        await update(editingCliente.id, payload)
       } else {
-        await create(formData)
+        await create(payload)
       }
       fetchClientes()
       resetForm()
@@ -152,6 +171,29 @@ export default function Customers() {
                     required
                   />
                 </div>
+
+                <div>
+  <Label htmlFor="vendedor">Vendedor</Label>
+  <select
+    id="vendedor"
+    className="w-full border border-gray-300 rounded px-3 py-2"
+    value={formData.vendedor?.id || ""}
+    onChange={(e) =>
+      setFormData((prev) => ({
+        ...prev,
+        vendedor: e.target.value ? { id: e.target.value } : null,
+      }))
+    }
+  >
+    <option value="">-- Selecciona un vendedor --</option>
+    {vendedores.map((v) => (
+      <option key={v.id} value={v.id}>
+        {v.name}
+      </option>
+    ))}
+  </select>
+</div>
+
 
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1">

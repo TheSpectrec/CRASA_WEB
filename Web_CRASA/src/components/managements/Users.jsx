@@ -15,10 +15,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select"
 
-import { MultiSelect } from "../MultiSelect"
 import { TransferClients } from "../TransferClients"
-
 import { Plus, Edit, Trash2, Users, ArrowRightLeft } from "lucide-react"
+import { MultiSelect } from "@/components/MultiSelect"
 
 // API
 import {
@@ -87,7 +86,9 @@ export default function UsersComponent() {
       email: formData.email,
       ...(formData.password && { password: formData.password }),
       role: formData.role,
-      ...(formData.role === "Vendedor" && { clientesAsignados: formData.clientesAsignados }),
+      ...(formData.role === "Vendedor" && {
+        clientesAsignados: formData.clientesAsignados,
+      }),
     }
 
     try {
@@ -121,7 +122,7 @@ export default function UsersComponent() {
   }
 
   const handleDelete = async (id) => {
-    if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+    if (confirm("\u00bfEst\u00e1s seguro de que deseas eliminar este usuario?")) {
       try {
         await deleteUser(id)
         fetchUsers()
@@ -132,18 +133,17 @@ export default function UsersComponent() {
   }
 
   const getRoleBadgeColor = (rol) => {
-  switch (rol) {
-    case "Administrador":
-      return "bg-red-100 text-red-800"
-    case "Supervisor":
-      return "bg-blue-100 text-blue-800"
-    case "Vendedor":
-      return "bg-green-100 text-green-800"
-    default:
-      return "bg-gray-100 text-gray-800"
+    switch (rol) {
+      case "Administrador":
+        return "bg-red-100 text-red-800"
+      case "Supervisor":
+        return "bg-blue-100 text-blue-800"
+      case "Vendedor":
+        return "bg-green-100 text-green-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
   }
-}
-
 
   return (
     <div className="space-y-6">
@@ -222,9 +222,10 @@ export default function UsersComponent() {
                 <div>
                   <Label>Clientes Asignados</Label>
                   <MultiSelect
+                    options={clientes}
                     selectedClientes={formData.clientesAsignados}
-                    onSelectionChange={(clientes) =>
-                      setFormData((prev) => ({ ...prev, clientesAsignados: clientes }))
+                    onSelectionChange={(seleccionados) =>
+                      setFormData((prev) => ({ ...prev, clientesAsignados: seleccionados }))
                     }
                   />
                 </div>
@@ -267,7 +268,7 @@ export default function UsersComponent() {
                   Editar
                 </Button>
 
-                {usuario.role === "Vendedor" && usuario.clientesAsignados?.length > 0 && (
+                {usuario.role === "Vendedor" && (
                   <Button size="sm" variant="outline" onClick={() => setTransferUser(usuario)}>
                     <ArrowRightLeft className="w-3 h-3" />
                   </Button>
