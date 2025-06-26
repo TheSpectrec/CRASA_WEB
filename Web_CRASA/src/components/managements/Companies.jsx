@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 // Components
 import { Button } from "@/components/ui/button"
@@ -9,46 +9,67 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-// Contexts
-import { useData } from "../../contexts/DataContext"
-
 // Icons
 import { Plus, Edit, Trash2, Building2 } from "lucide-react"
 
+// API
+import { getAll, create, update, remove } from "../../api/companyService"
+
 export default function Companies() {
-  const { empresas, addEmpresa, updateEmpresa, deleteEmpresa } = useData()
+  const [empresas, setEmpresas] = useState([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingEmpresa, setEditingEmpresa] = useState(null)
-  const [formData, setFormData] = useState({ nombre: "" })
+  const [formData, setFormData] = useState({ name: "" })
+
+  const fetchEmpresas = async () => {
+    try {
+      const response = await getAll()
+      setEmpresas(response.data)
+    } catch (error) {
+      console.error("Error al cargar empresas:", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchEmpresas()
+  }, [])
 
   const resetForm = () => {
-    setFormData({ nombre: "" })
+    setFormData({ name: "" }) // ✅ ahora se usa 'name'
     setEditingEmpresa(null)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.nombre.trim()) return
-
-    if (editingEmpresa) {
-      updateEmpresa(editingEmpresa.id, formData)
-    } else {
-      addEmpresa(formData)
+    if (!formData.name || !formData.name.trim()) return // ✅ se valida 'name'
+    try {
+      if (editingEmpresa) {
+        await update(editingEmpresa.id, formData)
+      } else {
+        await create(formData)
+      }
+      fetchEmpresas()
+      resetForm()
+      setIsDialogOpen(false)
+    } catch (error) {
+      console.error("Error al guardar empresa:", error)
     }
-
-    resetForm()
-    setIsDialogOpen(false)
   }
 
   const handleEdit = (empresa) => {
     setEditingEmpresa(empresa)
-    setFormData({ nombre: empresa.nombre })
+    setFormData({ name: empresa.name }) // ✅ correcto
     setIsDialogOpen(true)
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm("¿Estás seguro de que deseas eliminar esta empresa?")) {
-      deleteEmpresa(id)
+      try {
+        await remove(id)
+        fetchEmpresas()
+      } catch (error) {
+        console.error("Error al eliminar empresa:", error)
+      }
     }
   }
 
@@ -74,11 +95,11 @@ export default function Companies() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="nombre">Nombre de la Empresa</Label>
+                <Label htmlFor="name">Nombre de la Empresa</Label>
                 <Input
-                  id="nombre"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ nombre: e.target.value })}
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ name: e.target.value })}
                   placeholder="Ingrese el nombre de la empresa"
                   required
                 />
@@ -103,8 +124,8 @@ export default function Companies() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <span className="truncate" title={empresa.nombre}>
-                  {empresa.nombre}
+                <span className="truncate" title={empresa.name || "Sin nombre"}>
+                  {empresa.name || "Sin nombre"}
                 </span>
               </CardTitle>
             </CardHeader>

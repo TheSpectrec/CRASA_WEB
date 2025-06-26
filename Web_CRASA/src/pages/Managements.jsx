@@ -12,12 +12,12 @@ import { DataProvider } from "../contexts/DataContext"
 import { Users, Building2, Tag, Layers, Package, UserCheck, FolderOpenDot } from "lucide-react"
 
 // Gestion Components
-import User from "../components/managements/User"
+import User from "../components/managements/Users"
 import Companies from "../components/managements/Companies"
-import Brands from "../components/managements/Brands"
+import Brands from "../components/managements/Marks"
 import Families from "../components/managements/Families"
 import Products from "../components/managements/Products"
-import Clients from "../components/managements/Clients"
+import Clients from "../components/managements/Customers"
 
 const modules = [
     { id: "usuarios", name: "Gestión de Usuarios", icon: Users },
