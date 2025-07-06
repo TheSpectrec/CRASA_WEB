@@ -7,19 +7,21 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Badge } from "@/components/ui/badge"
 
-import { Search, Filter, Download } from "lucide-react"
+import { Search, Filter, Download, X, Check } from "lucide-react"
 
 export function Filters({ onExportar, titulo = "Panel de Control de Datos", descripcion = "Seleccione los filtros para visualizar los datos" }) {
     // Estados para los filtros
-  const [empresaSeleccionada, setEmpresaSeleccionada] = useState("")
-  const [vendedorSeleccionado, setVendedorSeleccionado] = useState("")
-  const [marcaSeleccionada, setMarcaSeleccionada] = useState("")
-  const [familiaSeleccionada, setFamiliaSeleccionada] = useState("")
-  const [clienteSeleccionado, setClienteSeleccionado] = useState("")
-  const [productoSeleccionado, setProductoSeleccionado] = useState("")
+  const [empresasSeleccionadas, setEmpresasSeleccionadas] = useState([])
+  const [vendedoresSeleccionados, setVendedoresSeleccionados] = useState([])
+  const [marcasSeleccionadas, setMarcasSeleccionadas] = useState([])
+  const [familiasSeleccionadas, setFamiliasSeleccionadas] = useState([])
+  const [clientesSeleccionados, setClientesSeleccionados] = useState([])
+  const [productosSeleccionados, setProductosSeleccionados] = useState([])
 
   // Estados para los diálogos
+  const [dialogoEmpresaAbierto, setDialogoEmpresaAbierto] = useState(false)
   const [dialogoVendedorAbierto, setDialogoVendedorAbierto] = useState(false)
   const [dialogoMarcaAbierto, setDialogoMarcaAbierto] = useState(false)
   const [dialogoFamiliaAbierto, setDialogoFamiliaAbierto] = useState(false)
@@ -84,38 +86,132 @@ export function Filters({ onExportar, titulo = "Panel de Control de Datos", desc
     "Producto J",
   ]
 
-  // Resetear filtros dependientes cuando cambia la empresa
-  useEffect(() => {
-    if (empresaSeleccionada) {
-      setVendedorSeleccionado("")
-      setMarcaSeleccionada("")
-      setFamiliaSeleccionada("")
-      setClienteSeleccionado("")
-      setProductoSeleccionado("")
+  // Funciones para manejar selección múltiple
+  const toggleSelection = (item, selectedItems, setSelectedItems) => {
+    if (selectedItems.includes(item)) {
+      setSelectedItems(selectedItems.filter((selected) => selected !== item))
+    } else {
+      setSelectedItems([...selectedItems, item])
     }
-  }, [empresaSeleccionada])
+  }
+
+  const removeSelection = (item, selectedItems, setSelectedItems) => {
+    setSelectedItems(selectedItems.filter((selected) => selected !== item))
+  }
+
+  // Resetear filtros dependientes cuando cambian las empresas
+  useEffect(() => {
+    if (empresasSeleccionadas.length > 0) {
+      setVendedoresSeleccionados([])
+      setMarcasSeleccionadas([])
+      setFamiliasSeleccionadas([])
+      setClientesSeleccionados([])
+      setProductosSeleccionados([])
+    }
+  }, [empresasSeleccionadas])
 
   // Limpiar todos los filtros
   const limpiarFiltros = () => {
-    setEmpresaSeleccionada("")
-    setVendedorSeleccionado("")
-    setMarcaSeleccionada("")
-    setFamiliaSeleccionada("")
-    setClienteSeleccionado("")
-    setProductoSeleccionado("")
+    setEmpresasSeleccionadas([])
+    setVendedoresSeleccionados([])
+    setMarcasSeleccionadas([])
+    setFamiliasSeleccionadas([])
+    setClientesSeleccionados([])
+    setProductosSeleccionados([])
   }
 
   // Obtener filtros aplicados
   const getFiltrosAplicados = () => {
     const filtros = []
-    if (empresaSeleccionada) filtros.push({ Filtro: "Empresa", Valor: empresaSeleccionada })
-    if (vendedorSeleccionado) filtros.push({ Filtro: "Vendedor", Valor: vendedorSeleccionado })
-    if (marcaSeleccionada) filtros.push({ Filtro: "Marca", Valor: marcaSeleccionada })
-    if (familiaSeleccionada) filtros.push({ Filtro: "Familia", Valor: familiaSeleccionada })
-    if (clienteSeleccionado) filtros.push({ Filtro: "Cliente", Valor: clienteSeleccionado })
-    if (productoSeleccionado) filtros.push({ Filtro: "Producto", Valor: productoSeleccionado })
+    if (empresasSeleccionadas.length > 0) filtros.push({ Filtro: "Empresas", Valor: empresasSeleccionadas.join(", ") })
+    if (vendedoresSeleccionados.length > 0)
+      filtros.push({ Filtro: "Vendedores", Valor: vendedoresSeleccionados.join(", ") })
+    if (marcasSeleccionadas.length > 0) filtros.push({ Filtro: "Marcas", Valor: marcasSeleccionadas.join(", ") })
+    if (familiasSeleccionadas.length > 0) filtros.push({ Filtro: "Familias", Valor: familiasSeleccionadas.join(", ") })
+    if (clientesSeleccionados.length > 0) filtros.push({ Filtro: "Clientes", Valor: clientesSeleccionados.join(", ") })
+    if (productosSeleccionados.length > 0)
+      filtros.push({ Filtro: "Productos", Valor: productosSeleccionados.join(", ") })
     return filtros
   }
+
+  // Componente para mostrar selecciones multiples
+  const MultiSelectDisplay = ({ label, selectedItems, onRemove, onOpenDialog, placeholder }) => (
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      <div className="min-h-[40px] border border-input rounded-md p-2 bg-background">
+        {selectedItems.length === 0 ? (
+          <Button
+            variant="ghost"
+            className="w-full justify-between h-auto p-1 text-muted-foreground"
+            onClick={onOpenDialog}
+          >
+            {placeholder}
+            <Search className="h-4 w-4 opacity-50" />
+          </Button>
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {selectedItems.map((item) => (
+              <Badge key={item} variant="secondary" className="text-xs">
+                {item}
+                <button
+                  onClick={() => onRemove(item)}
+                  className="ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onOpenDialog}>
+              <Search className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // Componente para diálogo de selección múltiple
+  const MultiSelectDialog = ({ title, items, selectedItems, onToggle, isOpen, onOpenChange }) => (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <Command>
+          <CommandInput placeholder={`Buscar ${title.toLowerCase()}...`} />
+          <CommandList>
+            <CommandEmpty>No se encontraron elementos.</CommandEmpty>
+            <CommandGroup>
+              {items.map((item) => (
+                <CommandItem key={item} onSelect={() => onToggle(item)}>
+                  <div className="flex items-center space-x-2 w-full">
+                    <div className="flex items-center justify-center w-4 h-4 border border-primary rounded">
+                      {selectedItems.includes(item) && <Check className="h-3 w-3 text-primary" />}
+                    </div>
+                    <span>{item}</span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+        <div className="flex justify-between pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              selectedItems.forEach((item) => onToggle(item))
+            }}
+          >
+            Limpiar selección
+          </Button>
+          <Button size="sm" onClick={() => onOpenChange(false)}>
+            Aplicar ({selectedItems.length})
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 
   return (
     <Card className="mb-6 ml-4 mr-4">
@@ -128,207 +224,114 @@ export function Filters({ onExportar, titulo = "Panel de Control de Datos", desc
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {/* Filtro de Empresa */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Empresa</label>
-            <Select value={empresaSeleccionada} onValueChange={setEmpresaSeleccionada}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar empresa" />
-              </SelectTrigger>
-              <SelectContent>
-                {empresas.map((empresa) => (
-                  <SelectItem key={empresa} value={empresa}>
-                    {empresa}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <MultiSelectDisplay
+            label="Empresa"
+            selectedItems={empresasSeleccionadas}
+            onRemove={(item) => removeSelection(item, empresasSeleccionadas, setEmpresasSeleccionadas)}
+            onOpenDialog={() => setDialogoEmpresaAbierto(true)}
+            placeholder="Seleccionar empresas"
+          />
 
           {/* Filtro de Vendedor */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Vendedor</label>
-            <Dialog open={dialogoVendedorAbierto} onOpenChange={setDialogoVendedorAbierto}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {vendedorSeleccionado || "Seleccionar vendedor"}
-                  <Search className="h-4 w-4 opacity-50" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Seleccionar Vendedor</DialogTitle>
-                </DialogHeader>
-                <Command>
-                  <CommandInput placeholder="Buscar vendedor..." />
-                  <CommandList>
-                    <CommandEmpty>No se encontraron vendedores.</CommandEmpty>
-                    <CommandGroup>
-                      {vendedores.map((vendedor) => (
-                        <CommandItem
-                          key={vendedor}
-                          onSelect={() => {
-                            setVendedorSeleccionado(vendedor)
-                            setDialogoVendedorAbierto(false)
-                          }}
-                        >
-                          {vendedor}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <MultiSelectDisplay
+            label="Vendedor"
+            selectedItems={vendedoresSeleccionados}
+            onRemove={(item) => removeSelection(item, vendedoresSeleccionados, setVendedoresSeleccionados)}
+            onOpenDialog={() => setDialogoVendedorAbierto(true)}
+            placeholder="Seleccionar vendedores"
+          />
 
           {/* Filtro de Marca */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Marca</label>
-            <Dialog open={dialogoMarcaAbierto} onOpenChange={setDialogoMarcaAbierto}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {marcaSeleccionada || "Seleccionar marca"}
-                  <Search className="h-4 w-4 opacity-50" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Seleccionar Marca</DialogTitle>
-                </DialogHeader>
-                <Command>
-                  <CommandInput placeholder="Buscar marca..." />
-                  <CommandList>
-                    <CommandEmpty>No se encontraron marcas.</CommandEmpty>
-                    <CommandGroup>
-                      {marcas.map((marca) => (
-                        <CommandItem
-                          key={marca}
-                          onSelect={() => {
-                            setMarcaSeleccionada(marca)
-                            setDialogoMarcaAbierto(false)
-                          }}
-                        >
-                          {marca}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <MultiSelectDisplay
+            label="Marca"
+            selectedItems={marcasSeleccionadas}
+            onRemove={(item) => removeSelection(item, marcasSeleccionadas, setMarcasSeleccionadas)}
+            onOpenDialog={() => setDialogoMarcaAbierto(true)}
+            placeholder="Seleccionar marcas"
+          />
 
           {/* Filtro de Familia */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Familia</label>
-            <Dialog open={dialogoFamiliaAbierto} onOpenChange={setDialogoFamiliaAbierto}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {familiaSeleccionada || "Seleccionar familia"}
-                  <Search className="h-4 w-4 opacity-50" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Seleccionar Familia</DialogTitle>
-                </DialogHeader>
-                <Command>
-                  <CommandInput placeholder="Buscar familia..." />
-                  <CommandList>
-                    <CommandEmpty>No se encontraron familias.</CommandEmpty>
-                    <CommandGroup>
-                      {familias.map((familia) => (
-                        <CommandItem
-                          key={familia}
-                          onSelect={() => {
-                            setFamiliaSeleccionada(familia)
-                            setDialogoFamiliaAbierto(false)
-                          }}
-                        >
-                          {familia}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <MultiSelectDisplay
+            label="Familia"
+            selectedItems={familiasSeleccionadas}
+            onRemove={(item) => removeSelection(item, familiasSeleccionadas, setFamiliasSeleccionadas)}
+            onOpenDialog={() => setDialogoFamiliaAbierto(true)}
+            placeholder="Seleccionar familias"
+          />
 
           {/* Filtro de Cliente */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Cliente</label>
-            <Dialog open={dialogoClienteAbierto} onOpenChange={setDialogoClienteAbierto}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {clienteSeleccionado || "Seleccionar cliente"}
-                  <Search className="h-4 w-4 opacity-50" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Seleccionar Cliente</DialogTitle>
-                </DialogHeader>
-                <Command>
-                  <CommandInput placeholder="Buscar cliente..." />
-                  <CommandList>
-                    <CommandEmpty>No se encontraron clientes.</CommandEmpty>
-                    <CommandGroup>
-                      {clientes.map((cliente) => (
-                        <CommandItem
-                          key={cliente}
-                          onSelect={() => {
-                            setClienteSeleccionado(cliente)
-                            setDialogoClienteAbierto(false)
-                          }}
-                        >
-                          {cliente}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <MultiSelectDisplay
+            label="Cliente"
+            selectedItems={clientesSeleccionados}
+            onRemove={(item) => removeSelection(item, clientesSeleccionados, setClientesSeleccionados)}
+            onOpenDialog={() => setDialogoClienteAbierto(true)}
+            placeholder="Seleccionar clientes"
+          />
 
           {/* Filtro de Producto */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Producto</label>
-            <Dialog open={dialogoProductoAbierto} onOpenChange={setDialogoProductoAbierto}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-between">
-                  {productoSeleccionado || "Seleccionar producto"}
-                  <Search className="h-4 w-4 opacity-50" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Seleccionar Producto</DialogTitle>
-                </DialogHeader>
-                <Command>
-                  <CommandInput placeholder="Buscar producto..." />
-                  <CommandList>
-                    <CommandEmpty>No se encontraron productos.</CommandEmpty>
-                    <CommandGroup>
-                      {productos.map((producto) => (
-                        <CommandItem
-                          key={producto}
-                          onSelect={() => {
-                            setProductoSeleccionado(producto)
-                            setDialogoProductoAbierto(false)
-                          }}
-                        >
-                          {producto}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <MultiSelectDisplay
+            label="Producto"
+            selectedItems={productosSeleccionados}
+            onRemove={(item) => removeSelection(item, productosSeleccionados, setProductosSeleccionados)}
+            onOpenDialog={() => setDialogoProductoAbierto(true)}
+            placeholder="Seleccionar productos"
+          />
         </div>
+
+        {/* Diálogos de selección múltiple */}
+        <MultiSelectDialog
+          title="Seleccionar Empresas"
+          items={empresas}
+          selectedItems={empresasSeleccionadas}
+          onToggle={(item) => toggleSelection(item, empresasSeleccionadas, setEmpresasSeleccionadas)}
+          isOpen={dialogoEmpresaAbierto}
+          onOpenChange={setDialogoEmpresaAbierto}
+        />
+
+        <MultiSelectDialog
+          title="Seleccionar Vendedores"
+          items={vendedores}
+          selectedItems={vendedoresSeleccionados}
+          onToggle={(item) => toggleSelection(item, vendedoresSeleccionados, setVendedoresSeleccionados)}
+          isOpen={dialogoVendedorAbierto}
+          onOpenChange={setDialogoVendedorAbierto}
+        />
+
+        <MultiSelectDialog
+          title="Seleccionar Marcas"
+          items={marcas}
+          selectedItems={marcasSeleccionadas}
+          onToggle={(item) => toggleSelection(item, marcasSeleccionadas, setMarcasSeleccionadas)}
+          isOpen={dialogoMarcaAbierto}
+          onOpenChange={setDialogoMarcaAbierto}
+        />
+
+        <MultiSelectDialog
+          title="Seleccionar Familias"
+          items={familias}
+          selectedItems={familiasSeleccionadas}
+          onToggle={(item) => toggleSelection(item, familiasSeleccionadas, setFamiliasSeleccionadas)}
+          isOpen={dialogoFamiliaAbierto}
+          onOpenChange={setDialogoFamiliaAbierto}
+        />
+
+        <MultiSelectDialog
+          title="Seleccionar Clientes"
+          items={clientes}
+          selectedItems={clientesSeleccionados}
+          onToggle={(item) => toggleSelection(item, clientesSeleccionados, setClientesSeleccionados)}
+          isOpen={dialogoClienteAbierto}
+          onOpenChange={setDialogoClienteAbierto}
+        />
+
+        <MultiSelectDialog
+          title="Seleccionar Productos"
+          items={productos}
+          selectedItems={productosSeleccionados}
+          onToggle={(item) => toggleSelection(item, productosSeleccionados, setProductosSeleccionados)}
+          isOpen={dialogoProductoAbierto}
+          onOpenChange={setDialogoProductoAbierto}
+        />
 
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
@@ -336,6 +339,14 @@ export function Filters({ onExportar, titulo = "Panel de Control de Datos", desc
               <Filter className="h-4 w-4 mr-2" />
               Limpiar filtros
             </Button>
+            {/* Mostrar resumen de filtros aplicados */}
+            <div className="text-sm text-muted-foreground">
+              {getFiltrosAplicados().length > 0 && (
+                <span>
+                  {getFiltrosAplicados().length} filtro{getFiltrosAplicados().length !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => onExportar && onExportar(getFiltrosAplicados())}>
             <Download className="h-4 w-4 mr-2" />
