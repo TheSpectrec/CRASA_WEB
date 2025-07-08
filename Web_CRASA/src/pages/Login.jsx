@@ -12,30 +12,38 @@ export default function Login() {
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
-        setError("");
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-        if (!email || !password) {
-            setError("Please fill in all fields.");
-            return;
+    try {
+        const response = await fetch("http://localhost:8080/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Credenciales inválidas");
         }
 
-        setLoading(true);
+        const data = await response.json();
+        console.log("Login exitoso:", data);
 
-        // Simulación de inicio de sesión
-        try {
-            // Aquí iría la lógica de autenticación real
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            // alert("Login successful!"); // Optional: can be removed or kept for debugging
-            console.log("Iniciando sesión con:", { email, password });
-            navigate('/general'); // Redirection after successful login
-        } catch (err) {
-            console.error("Error al iniciar sesión:", err);
-            setError("Error al iniciar sesión. Verifique sus credenciales.");
-        } finally {
-            setLoading(false);
-        }
+        // Puedes guardar el rol y correo en localStorage o contexto global
+        localStorage.setItem("usuario", JSON.stringify(data));
+
+        navigate("/general");
+    } catch (err) {
+        console.error("Error de login:", err);
+        setError("Correo o contraseña incorrectos.");
+    } finally {
+        setLoading(false);
     }
+};
+
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

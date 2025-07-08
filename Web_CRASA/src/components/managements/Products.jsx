@@ -25,7 +25,7 @@ export default function Products() {
   const [editingProducto, setEditingProducto] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [formData, setFormData] = useState({ codigo:"", description: "", price: "", familyId: "" })
+  const [formData, setFormData] = useState({ code:"", description: "", price: "", familyId: "" })
 
   const itemsPerPage = 20
 
