@@ -218,6 +218,111 @@ export default function GeneralPage() {
         setDatosPesos(datosPesosEstaticos);
     }, []);
 
+      // Función para aplicar formato de tabla en Excel
+  const aplicarFormatoTabla = (worksheet, rango, nombreTabla) => {
+    // Configurar la tabla
+    const tabla = {
+      ref: rango,
+      name: nombreTabla,
+      headerRowCount: 1,
+      totalsRowCount: 0,
+      style: {
+        theme: "TableStyleMedium2",
+        showFirstColumn: false,
+        showLastColumn: false,
+        showRowStripes: true,
+        showColumnStripes: false,
+      },
+    }
+
+    // Agregar la tabla a la hoja
+    if (!worksheet["!tables"]) worksheet["!tables"] = []
+    worksheet["!tables"].push(tabla)
+
+    return worksheet
+  }
+
+  // Función para configurar estilos de celdas
+  const configurarEstilos = (worksheet, datos) => {
+    const range = XLSX.utils.decode_range(worksheet["!ref"])
+
+    // Estilo para encabezados
+    const estiloEncabezado = {
+      font: { bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "366092" } },
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } },
+      },
+    }
+
+    // Estilo para celdas de datos
+    const estiloDatos = {
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "CCCCCC" } },
+        bottom: { style: "thin", color: { rgb: "CCCCCC" } },
+        left: { style: "thin", color: { rgb: "CCCCCC" } },
+        right: { style: "thin", color: { rgb: "CCCCCC" } },
+      },
+    }
+
+    // Estilo para fila de totales
+    const estiloTotales = {
+      font: { bold: true },
+      fill: { fgColor: { rgb: "F2F2F2" } },
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        top: { style: "medium", color: { rgb: "000000" } },
+        bottom: { style: "medium", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } },
+      },
+    }
+
+    // Aplicar estilos a encabezados (primera fila)
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col })
+      if (!worksheet[cellAddress]) continue
+      worksheet[cellAddress].s = estiloEncabezado
+    }
+
+    // Aplicar estilos a datos y identificar filas especiales
+    for (let row = 1; row <= range.e.r; row++) {
+      const filaData = datos[row - 1]
+      const esFila2024vs2025 = filaData && filaData.año && filaData.año.includes("2024 vs 2025")
+      const esFilaComparacion = filaData && filaData.isComparison
+
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col })
+        if (!worksheet[cellAddress]) continue
+
+        if (esFila2024vs2025 || esFilaComparacion) {
+          worksheet[cellAddress].s = estiloTotales
+        } else {
+          worksheet[cellAddress].s = estiloDatos
+        }
+      }
+    }
+
+    return worksheet
+  }
+
+  // Función para ajustar ancho de columnas
+  const ajustarAnchoColumnas = (worksheet, datos) => {
+    const columnas = Object.keys(datos[0] || {})
+    const anchos = columnas.map((col) => {
+      const maxLength = Math.max(col.length, ...datos.map((row) => String(row[col] || "").length))
+      return { wch: Math.min(Math.max(maxLength + 2, 10), 20) }
+    })
+
+    worksheet["!cols"] = anchos
+    return worksheet
+  }
+
     // Función para exportar datos a Excel
     const exportarDatos = (filtrosAplicados) => {
       try {
@@ -356,17 +461,166 @@ export default function GeneralPage() {
         }
       })
 
-      // Crear hojas de trabajo
-      const worksheetCajas = XLSX.utils.json_to_sheet(datosCajasExcel)
-      const worksheetPesos = XLSX.utils.json_to_sheet(datosPesosExcel)
+      // Crear una hoja combinada con ambas tablas
+      const worksheet = XLSX.utils.book_new().Sheets.Sheet1 || XLSX.utils.aoa_to_sheet([])
 
-      // Añadir las hojas al libro
-      XLSX.utils.book_append_sheet(workbook, worksheetCajas, "Datos Cajas")
-      XLSX.utils.book_append_sheet(workbook, worksheetPesos, "Datos Pesos")
+      // Agregar título para la tabla de Cajas
+      const tituloFilaCajas = 0
+      XLSX.utils.sheet_add_aoa(worksheet, [["TABLA DE CAJAS"]], {
+        origin: `A${tituloFilaCajas + 1}`,
+      })
+
+      // Agregar tabla de Cajas
+      const inicioCajas = tituloFilaCajas + 2
+      XLSX.utils.sheet_add_json(worksheet, datosCajasExcel, { origin: `A${inicioCajas}`, skipHeader: false })
+
+      // Calcular la posición para la tabla de Pesos (después de la tabla de Cajas + espacios)
+      const finCajas = inicioCajas + datosCajasExcel.length
+      const espacioEntreTables = 3
+      const tituloFilaPesos = finCajas + espacioEntreTables
+
+      // Agregar título para la tabla de Pesos
+      XLSX.utils.sheet_add_aoa(worksheet, [["TABLA DE PESOS"]], {
+        origin: `A${tituloFilaPesos + 1}`,
+      })
+
+      // Agregar tabla de Pesos
+      const inicioPesos = tituloFilaPesos + 2
+      XLSX.utils.sheet_add_json(worksheet, datosPesosExcel, { origin: `A${inicioPesos}`, skipHeader: false })
+
+      // Aplicar estilos a los títulos
+      const estiloTitulo = {
+        font: { bold: true, size: 14, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "2F5597" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "medium", color: { rgb: "000000" } },
+          bottom: { style: "medium", color: { rgb: "000000" } },
+          left: { style: "medium", color: { rgb: "000000" } },
+          right: { style: "medium", color: { rgb: "000000" } },
+        },
+      }
+
+      // Aplicar estilo al título de Cajas
+      const cellTituloCajas = `A${tituloFilaCajas + 1}`
+      if (!worksheet[cellTituloCajas]) worksheet[cellTituloCajas] = { v: "" }
+      worksheet[cellTituloCajas].s = estiloTitulo
+
+      // Aplicar estilo al título de Pesos
+      const cellTituloPesos = `A${tituloFilaPesos + 1}`
+      if (!worksheet[cellTituloPesos]) worksheet[cellTituloPesos] = { v: "" }
+      worksheet[cellTituloPesos].s = estiloTitulo
+
+      // Fusionar celdas para los títulos (16 columnas)
+      if (!worksheet["!merges"]) worksheet["!merges"] = []
+      worksheet["!merges"].push({
+        s: { r: tituloFilaCajas, c: 0 },
+        e: { r: tituloFilaCajas, c: 15 },
+      })
+      worksheet["!merges"].push({
+        s: { r: tituloFilaPesos, c: 0 },
+        e: { r: tituloFilaPesos, c: 15 },
+      })
+
+      // Aplicar estilos a las tablas
+      const aplicarEstilosTabla = (inicioFila, datos, esComparacion = false) => {
+        const estiloEncabezado = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "366092" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          },
+        }
+
+        const estiloDatos = {
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "CCCCCC" } },
+            bottom: { style: "thin", color: { rgb: "CCCCCC" } },
+            left: { style: "thin", color: { rgb: "CCCCCC" } },
+            right: { style: "thin", color: { rgb: "CCCCCC" } },
+          },
+        }
+
+        const estiloComparacion = {
+          font: { bold: true },
+          fill: { fgColor: { rgb: "F2F2F2" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "medium", color: { rgb: "000000" } },
+            bottom: { style: "medium", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          },
+        }
+
+        // Aplicar estilos a encabezados
+        for (let col = 0; col < 16; col++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: inicioFila - 1, c: col })
+          if (!worksheet[cellAddress]) continue
+          worksheet[cellAddress].s = estiloEncabezado
+        }
+
+        // Aplicar estilos a datos
+        for (let row = 0; row < datos.length; row++) {
+          const filaData = datos[row]
+          const esFilaComparacion = filaData && filaData.Año && filaData.Año.includes("2024 vs 2025")
+
+          for (let col = 0; col < 16; col++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: inicioFila + row, c: col })
+            if (!worksheet[cellAddress]) continue
+
+            if (esFilaComparacion) {
+              worksheet[cellAddress].s = estiloComparacion
+            } else {
+              worksheet[cellAddress].s = estiloDatos
+            }
+          }
+        }
+      }
+
+      // Aplicar estilos a ambas tablas
+      aplicarEstilosTabla(inicioCajas, datosCajasExcel)
+      aplicarEstilosTabla(inicioPesos, datosPesosExcel)
+
+      // Ajustar ancho de columnas
+      const columnas = Object.keys(datosCajasExcel[0] || {})
+      const anchos = columnas.map((col) => {
+        const maxLength = Math.max(
+          col.length,
+          ...datosCajasExcel.map((row) => String(row[col] || "").length),
+          ...datosPesosExcel.map((row) => String(row[col] || "").length),
+        )
+        return { wch: Math.min(Math.max(maxLength + 2, 10), 20) }
+      })
+
+      worksheet["!cols"] = anchos
+
+      // Establecer el rango de la hoja
+      const finPesos = inicioPesos + datosPesosExcel.length
+      worksheet["!ref"] = `A1:P${finPesos}`
+
+      // Añadir la hoja combinada al libro
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Datos Cajas y Pesos")
 
       // Agregar filtros aplicados si existen
       if (filtrosAplicados.length > 0) {
-        const worksheetFiltros = XLSX.utils.json_to_sheet(filtrosAplicados)
+        const filtrosData = filtrosAplicados.map((filtro, index) => ({
+          "No.": index + 1,
+          "Tipo de Filtro": filtro.Filtro,
+          "Valores Seleccionados": filtro.Valor,
+          "Fecha de Aplicación": new Date().toLocaleString(),
+        }))
+
+        let worksheetFiltros = XLSX.utils.json_to_sheet(filtrosData)
+        worksheetFiltros = ajustarAnchoColumnas(worksheetFiltros, filtrosData)
+        worksheetFiltros = configurarEstilos(worksheetFiltros, filtrosData)
+        worksheetFiltros = aplicarFormatoTabla(worksheetFiltros, worksheetFiltros["!ref"], "TablaFiltros")
+
         XLSX.utils.book_append_sheet(workbook, worksheetFiltros, "Filtros Aplicados")
       }
 
