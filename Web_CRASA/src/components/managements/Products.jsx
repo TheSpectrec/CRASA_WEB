@@ -1,103 +1,124 @@
 "use client"
 
-import { useState } from "react"
-
-// Components
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useState } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+} from "@/components/ui/dialog"
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select"
 
-// Contexts
-import { useData } from "../../contexts/DataContext"
-
-// Icons
 import { Plus, Trash2, Edit, Package, Search } from "lucide-react"
 
+import { getAll as getProducts, create, update, remove } from "../../api/productService"
+import { getAll as getFamilies } from "../../api/familyService"
+
 export default function Products() {
-  const { productos, familias, addProducto, updateProducto, deleteProducto } = useData()
+  const [productos, setProductos] = useState([])
+  const [familias, setFamilias] = useState([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingProducto, setEditingProducto] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [formData, setFormData] = useState({ codigo: "", descripcion: "", precio: "", familiaId: "" })
+  const [formData, setFormData] = useState({ code:"", description: "", price: "", familyId: "" })
 
   const itemsPerPage = 20
+
+  useEffect(() => {
+    fetchProducts()
+    fetchFamilies()
+  }, [])
+
+  const fetchProducts = async () => {
+    try {
+      const response = await getProducts()
+      setProductos(response.data)
+    } catch (error) {
+      console.error("Error al obtener productos:", error)
+    }
+  }
+
+  const fetchFamilies = async () => {
+    try {
+      const response = await getFamilies()
+      setFamilias(response.data)
+    } catch (error) {
+      console.error("Error al obtener familias:", error)
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({ description: "", price: "", familyId: "" })
+    setEditingProducto(null)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!formData.description.trim() || !formData.price || !formData.familyId) return
+
+    const productoData = {
+      description: formData.description,
+      price: parseFloat(formData.price),
+      family: { id: formData.familyId }
+    }
+
+    try {
+      if (editingProducto) {
+        await update(editingProducto.code, productoData)
+      } else {
+        await create(productoData)
+      }
+
+      fetchProducts()
+      resetForm()
+      setIsDialogOpen(false)
+    } catch (error) {
+      console.error("Error al guardar producto:", error)
+    }
+  }
+
+  const handleEdit = (producto) => {
+    const familiaExiste = familias.some(f => f.id === producto.family?.id)
+    setEditingProducto(producto)
+    setFormData({
+      description: producto.description,
+      price: producto.price.toString(),
+      familyId: familiaExiste ? producto.family.id : "",
+    })
+    setIsDialogOpen(true)
+  }
+
+  const handleDelete = async (code) => {
+    if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
+      try {
+        await remove(code)
+        fetchProducts()
+      } catch (error) {
+        console.error("Error al eliminar producto:", error)
+      }
+    }
+  }
+
+  const getFamiliaNombre = (familyId) => {
+    return familias.find((f) => f.id === familyId)?.name || "Familia no encontrada"
+  }
+
   const filteredProductos = productos.filter((producto) =>
-    producto.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+    producto.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const totalPages = Math.ceil(filteredProductos.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedProductos = filteredProductos.slice(startIndex, startIndex + itemsPerPage)
 
-  const resetForm = () => {
-    setFormData({ codigo: "", descripcion: "", precio: "", familiaId: "" })
-    setEditingProducto(null)
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!formData.codigo.trim() || !formData.descripcion.trim() || !formData.precio || !formData.familiaId) return
-
-    const codigoExiste = productos.some((p) => p.codigo === formData.codigo && (!editingProducto || p.id !== editingProducto.id))
-
-    if (codigoExiste) {
-      alert("El código del producto ya existe. Ingrese un código diferente.")
-      return
-    }
-
-    const productoData = {
-      codigo: formData.codigo,
-      descripcion: formData.descripcion,
-      precio: Number.parseFloat(formData.precio),
-      familiaId: formData.familiaId
-    }
-
-    if (editingProducto) {
-      updateProducto(editingProducto.id, productoData)
-    } else {
-      addProducto(productoData)
-    }
-
-    resetForm()
-    setIsDialogOpen(false)
-  }
-
-  const handleEdit = (producto) => {
-    setEditingProducto(producto)
-    // Verificar que la familia existe, sino limpiar la referencia
-    const familiaExiste = familias.some((familia) => familia.id === producto.familiaId)
-    setFormData({
-      codigo: producto.codigo,
-      descripcion: producto.descripcion,
-      precio: producto.precio.toString(),
-      familiaId: familiaExiste ? producto.familiaId : "",
-    })
-    setIsDialogOpen(true)
-  }
-
-  const handleDelete = (id) => {
-    if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-      deleteProducto(id)
-    }
-  }
-
-  const getFamiliaNombre = (familiaId) => {
-    return familias.find((f) => f.id === familiaId)?.nombre || "Familia no encontrada"
-  }
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value)
-    setCurrentPage(1)
-  }
-
   return (
     <div className="space-y-6">
+      {/* Encabezado y buscador */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="flex items-center gap-2">
           <Package className="w-6 h-6" />
@@ -110,7 +131,7 @@ export default function Products() {
             <Input
               placeholder="Buscar productos..."
               value={searchTerm}
-              onChange={handleSearchChange}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8 w-full sm:w-64"
             />
           </div>
@@ -138,37 +159,20 @@ export default function Products() {
                     required
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="descripcion">Descripción</Label>
+                  <Label htmlFor="description">Descripción</Label>
                   <Input
-                    id="descripcion"
-                    value={formData.descripcion}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, descripcion: e.target.value }))}
-                    placeholder="Descripción del producto"
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
                     required
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="precio">Precio</Label>
-                  <Input
-                    id="precio"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.precio}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, precio: e.target.value }))}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="familia">Familia</Label>
+                  <Label>Familia</Label>
                   <Select
-                    value={formData.familiaId}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, familiaId: value }))}
+                    value={formData.familyId}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, familyId: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar familia" />
@@ -176,7 +180,7 @@ export default function Products() {
                     <SelectContent>
                       {familias.map((familia) => (
                         <SelectItem key={familia.id} value={familia.id}>
-                          {familia.nombre}
+                          {familia.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -197,6 +201,7 @@ export default function Products() {
         </div>
       </div>
 
+      {/* Lista de productos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
         {paginatedProductos.length === 0 ? (
           <div className="col-span-full text-center py-12">
@@ -206,92 +211,63 @@ export default function Products() {
             </p>
           </div>
         ) : (
-          paginatedProductos.map((producto) => {
-            const familiaNombre = getFamiliaNombre(producto.familiaId)
-
-            return (
-              <Card key={producto.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg flex items-center gap-2 truncate pr-2" title={producto.descripcion}>
-                      <Package className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <span className="truncate" title={producto.descripcion}>
-                        {producto.descripcion}
-                      </span>
-                    </CardTitle>
-                    <Badge variant="secondary" className="font-mono text-xs">
+          paginatedProductos.map((producto) => (
+            <Card key={producto.code} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg flex items-center gap-2 truncate pr-2" title={producto.description}>
+                    <Package className="w-5 h-5 text-green-600 flex-shrink-0" />
+                    <span className="truncate">{producto.description}</span>
+                  </CardTitle>     
+                  <Badge variant="secondary" className="font-mono text-xs">
                       {producto.codigo}
-                    </Badge>
-                  </div>
-                </CardHeader>
+                    </Badge>            
+                </div>
+              </CardHeader>
 
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm text-gray-600">Precio:</p>
-                      <p className="text-lg font-bold text-green-600">${producto.precio.toFixed(2)}</p>
-                    </div>
-                  </div>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Familia:</p>
+                  <p className="text-sm font-medium truncate">{getFamiliaNombre(producto.family?.id)}</p>
+                </div>
 
-                  <div>
-                    <p className="text-sm text-gray-600">Familia:</p>
-                    {familiaNombre ? (
-                      <p className="text-sm font-medium truncate" title={familiaNombre}>
-                        {familiaNombre}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-500 italic">No hay familia asignada</p>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(producto)} className="flex-1">
-                      <Edit className="w-3 h-3 mr-1" />
-                      Editar
-                    </Button>
-
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(producto.id)}>
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(producto)} className="flex-1">
+                    <Edit className="w-3 h-3 mr-1" />
+                    Editar
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(producto.code)}>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 
+      {/* Paginación */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
             Anterior
           </Button>
 
           <div className="flex items-center gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            {Array.from({ length: totalPages }, (_, i) => (
               <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
+                key={i + 1}
                 size="sm"
-                onClick={() => setCurrentPage(page)}
+                variant={currentPage === i + 1 ? "default" : "outline"}
+                onClick={() => setCurrentPage(i + 1)}
                 className="w-8 h-8 p-0"
               >
-                {page}
+                {i + 1}
               </Button>
             ))}
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
             Siguiente
           </Button>
         </div>

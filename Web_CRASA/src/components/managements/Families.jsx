@@ -1,75 +1,121 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 // Components
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-
-// Contexts
-import { useData } from "../../contexts/DataContext"
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+} from "@/components/ui/dialog"
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select"
 
 // Icons
 import { Plus, Trash2, Edit, Layers, Search } from "lucide-react"
 
+// API
+import { getAll as getFamilies, create, update, remove } from "../../api/familyService"
+import { getAll as getMarks } from "../../api/markService"
+
 export default function Families() {
-  const { familias, marcas, addFamilia, updateFamilia, deleteFamilia } = useData()
+  const [familias, setFamilias] = useState([])
+  const [marcas, setMarcas] = useState([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingFamilia, setEditingFamilia] = useState(null)
-  const [formData, setFormData] = useState({ nombre: "", marcaId: "" })
+  const [formData, setFormData] = useState({ name: "", markId: "" })
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
 
   const itemsPerPage = 20
-  const filteredFamilias = familias.filter((familia) => familia.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
-  const totalPages = Math.ceil(filteredFamilias.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedFamilias = filteredFamilias.slice(startIndex, startIndex + itemsPerPage)
+
+  useEffect(() => {
+    fetchFamilias()
+    fetchMarcas()
+  }, [])
+
+  const fetchFamilias = async () => {
+    try {
+      const response = await getFamilies()
+      setFamilias(response.data)
+    } catch (error) {
+      console.error("Error al cargar familias:", error)
+    }
+  }
+
+  const fetchMarcas = async () => {
+    try {
+      const response = await getMarks()
+      setMarcas(response.data)
+    } catch (error) {
+      console.error("Error al cargar marcas:", error)
+    }
+  }
 
   const resetForm = () => {
-    setFormData({ nombre: "", marcaId: "" })
+    setFormData({ name: "", markId: "" })
     setEditingFamilia(null)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.nombre.trim() || !formData.marcaId) return
+    if (!formData.name.trim() || !formData.markId) return
 
-    if (editingFamilia) {
-      updateFamilia(editingFamilia.id, formData)
-    } else {
-      addFamilia(formData)
+    const dataToSend = {
+      name: formData.name,
+      mark: { id: formData.markId }
     }
 
-    resetForm()
-    setIsDialogOpen(false)
+    try {
+      if (editingFamilia) {
+        await update(editingFamilia.id, dataToSend)
+      } else {
+        await create(dataToSend)
+      }
+      fetchFamilias()
+      resetForm()
+      setIsDialogOpen(false)
+    } catch (error) {
+      console.error("Error al guardar familia:", error)
+    }
   }
 
   const handleEdit = (familia) => {
     setEditingFamilia(familia)
-    // Verificar que la marca existe, sino limpiar la referencia
-    const marcaExiste = marcas.some((marca) => marca.id === familia.marcaId)
     setFormData({
-      nombre: familia.nombre,
-      marcaId: marcaExiste ? familia.marcaId : "",
+      name: familia.name,
+      markId: familia.mark?.id || ""
     })
     setIsDialogOpen(true)
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm("¿Estás seguro de que quieres eliminar esta familia?")) {
-      deleteFamilia(id)
+      try {
+        await remove(id)
+        fetchFamilias()
+      } catch (error) {
+        console.error("Error al eliminar familia:", error)
+      }
     }
   }
 
-  const getMarcaNombre = (marcaId) => {
-    const marca = marcas.find((m) => m.id === marcaId)
-    return marca ? marca.nombre : null
+  const getMarcaNombre = (markId) => {
+    const marca = marcas.find((m) => m.id === markId)
+    return marca ? marca.name : null
   }
+
+  const filteredFamilias = familias.filter((familia) =>
+    familia.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const totalPages = Math.ceil(filteredFamilias.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedFamilias = filteredFamilias.slice(startIndex, startIndex + itemsPerPage)
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value)
@@ -109,21 +155,21 @@ export default function Families() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="nombre">Nombre de la Familia</Label>
+                  <Label htmlFor="name">Nombre de la Familia</Label>
                   <Input
-                    id="nombre"
-                    value={formData.nombre}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, nombre: e.target.value }))}
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="Ingrese el nombre de la familia"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="marca">Marca</Label>
+                  <Label htmlFor="mark">Marca</Label>
                   <Select
-                    value={formData.marcaId}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, marcaId: value }))}
+                    value={formData.markId}
+                    onValueChange={(value) => setFormData((prev) => ({ ...prev, markId: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar marca" />
@@ -131,7 +177,7 @@ export default function Families() {
                     <SelectContent>
                       {marcas.map((marca) => (
                         <SelectItem key={marca.id} value={marca.id}>
-                          {marca.nombre}
+                          {marca.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -162,15 +208,15 @@ export default function Families() {
           </div>
         ) : (
           paginatedFamilias.map((familia) => {
-            const marcaNombre = getMarcaNombre(familia.marcaId)
+            const marcaNombre = getMarcaNombre(familia.mark?.id)
 
             return (
               <Card key={familia.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Layers className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                    <span className="truncate" title={familia.nombre}>
-                      {familia.nombre}
+                    <span className="truncate" title={familia.name}>
+                      {familia.name}
                     </span>
                   </CardTitle>
                 </CardHeader>

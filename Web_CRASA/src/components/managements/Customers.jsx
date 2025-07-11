@@ -1,74 +1,106 @@
 "use client"
 
-import { useState } from "react"
-
-// Components
+import { useEffect, useState } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-
-// Contexts
-import { useData } from "../../contexts/DataContext"
-
-// Icons
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+} from "@/components/ui/dialog"
 import { Plus, Trash2, Edit, UserCheck, Search } from "lucide-react"
 
-export default function Clients() {
-  const { clientes, addCliente, updateCliente, deleteCliente } = useData()
+import { getAll, create, update, remove } from "../../api/customerService"
+
+export default function Customers() {
+  const [clientes, setClientes] = useState([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCliente, setEditingCliente] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [formData, setFormData] = useState({ codigo: "", nombre: "" })
+  const [formData, setFormData] = useState({ customerCode: "", name: "" })
+  const [vendedores, setVendedores] = useState([])
 
   const itemsPerPage = 20
-  const filteredClientes = clientes.filter((cliente) =>
-    cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-  )
 
-  const totalPages = Math.ceil(filteredClientes.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedClientes = filteredClientes.slice(startIndex, startIndex + itemsPerPage)
+  useEffect(() => {
+    fetchClientes(),
+    fetchVendedores()
+  }, [])
+
+  const fetchVendedores = async () => {
+  try {
+    const res = await fetch("http://localhost:8080/api/users/vendedores")
+    const data = await res.json()
+    setVendedores(data)
+  } catch (error) {
+    console.error("Error al cargar vendedores:", error)
+  }
+}
+
+  const fetchClientes = async () => {
+    try {
+      const response = await getAll()
+      setClientes(response.data)
+    } catch (error) {
+      console.error("Error al cargar clientes:", error)
+    }
+  }
 
   const resetForm = () => {
-    setFormData({ codigo: "", nombre: "" })
+    setFormData({ customerCode: "", name: "" })
     setEditingCliente(null)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.codigo.trim() || !formData.nombre.trim()) return
+    if (!formData.customerCode.trim() || !formData.name.trim()) return
 
-    const codigoExiste = clientes.some((c) => c.codigo === formData.codigo && (!editingCliente || c.id !== editingCliente.id))
+    const codigoExiste = clientes.some(c =>
+      c.customerCode === formData.customerCode && (!editingCliente || c.id !== editingCliente.id)
+    )
 
     if (codigoExiste) {
       alert("El código ya existe. Por favor, utiliza otro.")
       return
     }
 
-    if (editingCliente) {
-      updateCliente(editingCliente.id, formData)
-    } else {
-      addCliente(formData)
-    }
+    const payload = {
+  customerCode: formData.customerCode,
+  name: formData.name,
+  ...(formData.vendedor && formData.vendedor.id ? { vendedor: formData.vendedor } : {})
+}
 
-    resetForm()
-    setIsDialogOpen(false)
+
+    try {
+      if (editingCliente) {
+        await update(editingCliente.id, payload)
+      } else {
+        await create(payload)
+      }
+      fetchClientes()
+      resetForm()
+      setIsDialogOpen(false)
+    } catch (error) {
+      console.error("Error al guardar cliente:", error)
+    }
   }
 
   const handleEdit = (cliente) => {
     setEditingCliente(cliente)
-    setFormData({ codigo: cliente.codigo, nombre: cliente.nombre })
+    setFormData({ customerCode: cliente.customerCode, name: cliente.name })
     setIsDialogOpen(true)
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
-      deleteCliente(id)
+      try {
+        await remove(id)
+        fetchClientes()
+      } catch (error) {
+        console.error("Error al eliminar cliente:", error)
+      }
     }
   }
 
@@ -76,6 +108,15 @@ export default function Clients() {
     setSearchTerm(e.target.value)
     setCurrentPage(1)
   }
+
+  const filteredClientes = clientes.filter(c =>
+    (c.name?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
+    (c.customerCode?.toLowerCase() ?? "").includes(searchTerm.toLowerCase())
+  )
+
+  const totalPages = Math.ceil(filteredClientes.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedClientes = filteredClientes.slice(startIndex, startIndex + itemsPerPage)
 
   return (
     <div className="space-y-6">
@@ -113,8 +154,8 @@ export default function Clients() {
                   <Label htmlFor="codigo">Código</Label>
                   <Input
                     id="codigo"
-                    value={formData.codigo}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, codigo: e.target.value }))}
+                    value={formData.customerCode}
+                    onChange={(e) => setFormData(prev => ({ ...prev, customerCode: e.target.value }))}
                     placeholder="Código único del cliente"
                     required
                   />
@@ -124,12 +165,35 @@ export default function Clients() {
                   <Label htmlFor="nombre">Nombre del Cliente</Label>
                   <Input
                     id="nombre"
-                    value={formData.nombre}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, nombre: e.target.value }))}
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Nombre completo del cliente"
                     required
                   />
                 </div>
+
+                <div>
+  <Label htmlFor="vendedor">Vendedor</Label>
+  <select
+    id="vendedor"
+    className="w-full border border-gray-300 rounded px-3 py-2"
+    value={formData.vendedor?.id || ""}
+    onChange={(e) =>
+      setFormData((prev) => ({
+        ...prev,
+        vendedor: e.target.value ? { id: e.target.value } : null,
+      }))
+    }
+  >
+    <option value="">-- Selecciona un vendedor --</option>
+    {vendedores.map((v) => (
+      <option key={v.id} value={v.id}>
+        {v.name}
+      </option>
+    ))}
+  </select>
+</div>
+
 
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1">
@@ -158,22 +222,18 @@ export default function Clients() {
             <Card key={cliente.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg flex items-center gap-2 truncate pr-2" title={cliente.nombre}>
+                  <CardTitle className="text-lg flex items-center gap-2 truncate pr-2" title={cliente.name}>
                     <UserCheck className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <span className="truncate" title={cliente.nombre}>
-                      {cliente.nombre}
-                    </span>
+                    <span className="truncate">{cliente.name}</span>
                   </CardTitle>
-                  <Badge variant="secondary" className="font-mono text-xs">
-                    {cliente.codigo}
-                  </Badge>
+                  <Badge variant="secondary" className="font-mono text-xs">{cliente.customerCode}</Badge>
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-3">
                 <div>
                   <p className="text-sm text-gray-600">Código:</p>
-                  <p className="text-sm font-medium font-mono">{cliente.codigo}</p>
+                  <p className="text-sm font-medium font-mono">{cliente.customerCode}</p>
                 </div>
 
                 <div className="flex gap-2 pt-2">
@@ -181,7 +241,6 @@ export default function Clients() {
                     <Edit className="w-3 h-3 mr-1" />
                     Editar
                   </Button>
-
                   <Button size="sm" variant="destructive" onClick={() => handleDelete(cliente.id)}>
                     <Trash2 className="w-3 h-3" />
                   </Button>
@@ -194,15 +253,9 @@ export default function Clients() {
 
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
             Anterior
           </Button>
-
           <div className="flex items-center gap-1">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <Button
@@ -216,13 +269,7 @@ export default function Clients() {
               </Button>
             ))}
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
+          <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
             Siguiente
           </Button>
         </div>

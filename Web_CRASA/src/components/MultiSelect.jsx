@@ -15,28 +15,32 @@ import { useData } from "../contexts/DataContext"
 // Icons
 import { Search, ChevronDown } from "lucide-react"
 
-export function MultiSelect ({ selectedClientes, onSelectionChange }) {
-    const { clientes } = useData()
+export function MultiSelect ({ options = [], selectedClientes, onSelectionChange }) {
     const [isOpen, setIsOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
 
-    const filteredClientes = clientes.filter(
-        (cliente) =>
-            cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            cliente.codigo.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+    const filteredClientes = options.filter((cliente) => {
+  const nombre = cliente.name || ""
+  const codigo = cliente.customerCode || ""
+  return (
+    nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    codigo.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+})
+
 
     const handleClienteToggle = (clienteId) => {
         const newSelection = selectedClientes.includes(clienteId)
-        ? selectedClientes.filter((id) => id !== clienteId)
-        : [...selectedClientes, clienteId]
+            ? selectedClientes.filter((id) => id !== clienteId)
+            : [...selectedClientes, clienteId]
 
         onSelectionChange(newSelection)
     }
 
-    const selectedClientesNames = clientes
-    .filter((cliente) => selectedClientes.includes(cliente.id))
-    .map((cliente) => cliente.nombre)
+    const selectedClientesNames = options
+        .filter((cliente) => selectedClientes.includes(cliente.id))
+        .map((cliente) => cliente.name)
+
 
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -80,8 +84,8 @@ export function MultiSelect ({ selectedClientes, onSelectionChange }) {
                     onChange={() => handleClienteToggle(cliente.id)}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{cliente.nombre}</p>
-                    <p className="text-xs text-muted-foreground">Código: {cliente.codigo}</p>
+                    <p className="text-sm font-medium truncate">{cliente.name}</p>
+                    <p className="text-xs text-muted-foreground">Código: {cliente.customerCode}</p>
                   </div>
                 </div>
               ))

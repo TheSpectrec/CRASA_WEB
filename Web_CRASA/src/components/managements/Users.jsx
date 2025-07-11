@@ -1,97 +1,140 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 // Components
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MultiSelect } from "../MultiSelect"
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+} from "@/components/ui/dialog"
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select"
+
 import { TransferClients } from "../TransferClients"
-
-// Contexts
-import { useData } from "../../contexts/DataContext"
-
-
-// Icons
 import { Plus, Edit, Trash2, Users, ArrowRightLeft } from "lucide-react"
+import { MultiSelect } from "@/components/MultiSelect"
 
-export default function User() {
-  const { usuarios, addUsuario, updateUsuario, deleteUsuario, clientes } = useData()
+// API
+import {
+  getAll as getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser
+} from "../../api/userService"
+import { getAll as getAllCustomers } from "../../api/customerService"
+
+export default function UsersComponent() {
+  const [usuarios, setUsuarios] = useState([])
+  const [clientes, setClientes] = useState([])
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [transferUser, setTransferUser] = useState(null)
 
   const [formData, setFormData] = useState({
-    nombreCompleto: "",
-    correo: "",
-    contraseña: "",
-    rol: "",
+    name: "",
+    email: "",
+    password: "",
+    role: "",
     clientesAsignados: [],
   })
 
+  useEffect(() => {
+    fetchUsers()
+    fetchClientes()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      const res = await getAllUsers()
+      setUsuarios(res.data)
+    } catch (err) {
+      console.error("Error al cargar usuarios:", err)
+    }
+  }
+
+  const fetchClientes = async () => {
+    try {
+      const res = await getAllCustomers()
+      setClientes(res.data)
+    } catch (err) {
+      console.error("Error al cargar clientes:", err)
+    }
+  }
+
   const resetForm = () => {
     setFormData({
-      nombreCompleto: "",
-      correo: "",
-      contraseña: "",
-      rol: "",
+      name: "",
+      email: "",
+      password: "",
+      role: "",
       clientesAsignados: [],
     })
     setEditingUser(null)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.nombreCompleto || !formData.correo || !formData.rol) return
 
-    const userData = {
-      nombreCompleto: formData.nombreCompleto,
-      correo: formData.correo,
-      contraseña: formData.contraseña,
-      rol: formData.rol,
-      ...(formData.rol === "Vendedor" && { clientesAsignados: formData.clientesAsignados }),
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      ...(formData.password && { password: formData.password }),
+      role: formData.role,
+      ...(formData.role === "Vendedor" && {
+        clientesAsignados: formData.clientesAsignados,
+      }),
     }
 
-    if (editingUser) {
-      updateUsuario(editingUser.id, userData)
-    } else {
-      addUsuario(userData)
+    try {
+      if (editingUser) {
+        await updateUser(editingUser.id, payload)
+      } else {
+        await createUser(payload)
+      }
+      fetchUsers()
+      setIsDialogOpen(false)
+      resetForm()
+    } catch (err) {
+      console.error("Error al guardar usuario:", err)
     }
-
-    resetForm()
-    setIsDialogOpen(false)
   }
 
   const handleEdit = (usuario) => {
-    setEditingUser(usuario)
-    // Filtrar solo clientes que existen
-    const clientesValidos = (usuario.clientesAsignados || []).filter((clienteId) =>
-      clientes.some((cliente) => cliente.id === clienteId),
+    const clientesValidos = (usuario.clientesAsignados || []).filter((id) =>
+      clientes.some((c) => c.id === id)
     )
+
+    setEditingUser(usuario)
     setFormData({
-      nombreCompleto: usuario.nombreCompleto,
-      correo: usuario.correo,
-      contraseña: usuario.contraseña,
-      rol: usuario.rol,
+      name: usuario.name,
+      email: usuario.email,
+      password: "",
+      role: usuario.role,
       clientesAsignados: clientesValidos,
     })
     setIsDialogOpen(true)
   }
 
-  const handleDelete = (id) => {
-    if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-      deleteUsuario(id)
+  const handleDelete = async (id) => {
+    if (confirm("\u00bfEst\u00e1s seguro de que deseas eliminar este usuario?")) {
+      try {
+        await deleteUser(id)
+        fetchUsers()
+      } catch (err) {
+        console.error("Error al eliminar usuario:", err)
+      }
     }
   }
 
   const getRoleBadgeColor = (rol) => {
     switch (rol) {
-      case "Admin":
+      case "Administrador":
         return "bg-red-100 text-red-800"
       case "Supervisor":
         return "bg-blue-100 text-blue-800"
@@ -124,22 +167,22 @@ export default function User() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="nombreCompleto">Nombre Completo</Label>
+                <Label htmlFor="name">Nombre Completo</Label>
                 <Input
-                  id="nombreCompleto"
-                  value={formData.nombreCompleto}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, nombreCompleto: e.target.value }))}
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="correo">Correo Electrónico</Label>
+                <Label htmlFor="email">Correo Electrónico</Label>
                 <Input
-                  id="correo"
+                  id="email"
                   type="email"
-                  value={formData.correo}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, correo: e.target.value }))}
+                  value={formData.email}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   required
                   disabled={!!editingUser}
                 />
@@ -147,40 +190,43 @@ export default function User() {
 
               {!editingUser && (
                 <div>
-                  <Label htmlFor="contraseña">Contraseña</Label>
+                  <Label htmlFor="password">Contraseña</Label>
                   <Input
-                    id="contraseña"
+                    id="password"
                     type="password"
-                    value={formData.contraseña}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, contraseña: e.target.value }))}
+                    value={formData.password}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                     required
                   />
                 </div>
               )}
 
               <div>
-                <Label htmlFor="rol">Rol</Label>
+                <Label>Rol</Label>
                 <Select
-                  value={formData.rol}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, rol: value }))}
+                  value={formData.role}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, role: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Admin">Admin</SelectItem>
+                    <SelectItem value="Administrador">Administrador</SelectItem>
                     <SelectItem value="Supervisor">Supervisor</SelectItem>
                     <SelectItem value="Vendedor">Vendedor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {formData.rol === "Vendedor" && (
+              {formData.role === "Vendedor" && (
                 <div>
                   <Label>Clientes Asignados</Label>
                   <MultiSelect
+                    options={clientes}
                     selectedClientes={formData.clientesAsignados}
-                    onSelectionChange={(clientes) => setFormData((prev) => ({ ...prev, clientesAsignados: clientes }))}
+                    onSelectionChange={(seleccionados) =>
+                      setFormData((prev) => ({ ...prev, clientesAsignados: seleccionados }))
+                    }
                   />
                 </div>
               )}
@@ -203,19 +249,17 @@ export default function User() {
           <Card key={usuario.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
-                <CardTitle className="text-lg truncate pr-2" title={usuario.nombreCompleto}>
-                  {usuario.nombreCompleto}
+                <CardTitle className="text-lg truncate pr-2" title={usuario.name}>
+                  {usuario.name}
                 </CardTitle>
-                <Badge className={getRoleBadgeColor(usuario.rol)}>{usuario.rol}</Badge>
+                <Badge className={getRoleBadgeColor(usuario.role)}>{usuario.role}</Badge>
               </div>
             </CardHeader>
 
             <CardContent className="space-y-3">
               <div>
                 <p className="text-sm text-gray-600">Correo:</p>
-                <p className="text-sm font-medium truncate" title={usuario.correo}>
-                  {usuario.correo}
-                </p>
+                <p className="text-sm font-medium truncate">{usuario.email}</p>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -224,7 +268,7 @@ export default function User() {
                   Editar
                 </Button>
 
-                {usuario.rol === "Vendedor" && usuario.clientesAsignados && usuario.clientesAsignados.length > 0 && (
+                {usuario.role === "Vendedor" && (
                   <Button size="sm" variant="outline" onClick={() => setTransferUser(usuario)}>
                     <ArrowRightLeft className="w-3 h-3" />
                   </Button>
